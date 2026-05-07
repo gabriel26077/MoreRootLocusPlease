@@ -43,20 +43,37 @@ else:
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("Requisitos de Projeto")
-overshoot = st.sidebar.number_input("Sobressinal Máximo (%)", value=10.0)
-ts = st.sidebar.number_input("Tempo de Acomodação (s)", value=2.0)
-ts_criterion_str = st.sidebar.selectbox("Critério do Tempo de Acomodação", ["2%", "5%"])
+req_type = st.sidebar.selectbox("Tipo de Especificação", ["Sobressinal e Tempo de Acomodação", "Zeta e Omega_n", "Polo Desejado (s_d) diretamente"])
+
+pd_params = {
+    'use_expr': use_expr,
+    'g_num_str': g_num_str, 'g_den_str': g_den_str,
+    'req_type': req_type
+}
+
+if req_type == "Sobressinal e Tempo de Acomodação":
+    overshoot = st.sidebar.number_input("Sobressinal Máximo (%)", value=10.0)
+    ts = st.sidebar.number_input("Tempo de Acomodação (s)", value=4.0)
+    ts_criterion_str = st.sidebar.selectbox("Critério do Tempo de Acomodação", ["5%","2%"])
+    pd_params['overshoot'] = overshoot
+    pd_params['ts'] = ts
+    pd_params['ts_criterion'] = ts_criterion_str
+elif req_type == "Zeta e Omega_n":
+    zeta_input = st.sidebar.number_input(r"Zeta (Fator de Amortecimento $\zeta$)", value=0.5, step=0.05)
+    wn_input = st.sidebar.number_input(r"Omega_n (Frequência Natural $\omega_n$)", value=2.0, step=0.5)
+    pd_params['zeta'] = zeta_input
+    pd_params['wn'] = wn_input
+else:
+    sd_real = st.sidebar.number_input(r"Parte Real de $s_d$ ($\sigma$)", value=-1.0, step=0.1)
+    sd_imag = st.sidebar.number_input(r"Parte Imaginária de $s_d$ ($\omega_d$)", value=1.732, step=0.1)
+    pd_params['sd_real'] = sd_real
+    pd_params['sd_imag'] = sd_imag
 
 st.sidebar.markdown("---")
 calcular = st.sidebar.button("🚀 Calcular Projeto PD", use_container_width=True)
 
 if calcular:
-    st.session_state['pd_params'] = {
-        'use_expr': use_expr,
-        'g_num_str': g_num_str, 'g_den_str': g_den_str,
-        'overshoot': overshoot, 'ts': ts,
-        'ts_criterion': ts_criterion_str
-    }
+    st.session_state['pd_params'] = pd_params
 
 if 'pd_params' not in st.session_state:
     st.info("👈 Configure a planta e os requisitos na barra lateral e clique em **🚀 Calcular**.")
@@ -91,10 +108,23 @@ all_zeros = [complex(z) for z in sp.nroots(G_num_sym)] if not G_num_sym.is_numbe
 all_poles = [complex(p) for p in sp.nroots(G_den_sym)] if not G_den_sym.is_number else []
 
 # ==========================================
-# CÁLCULOS INICIAIS
+# CÁLCULOS INICIAIS E DEFINIÇÃO DE s_d
 # ==========================================
-ts_criterion_val = 0.02 if p.get('ts_criterion', '2%') == '2%' else 0.05
-zeta, wn, sd = calculate_desired_poles(p['overshoot'], p['ts'], criterion=ts_criterion_val)
+req_type_state = p.get('req_type', "Sobressinal e Tempo de Acomodação")
+
+if req_type_state == "Sobressinal e Tempo de Acomodação":
+    ts_criterion_val = 0.02 if p.get('ts_criterion', '2%') == '2%' else 0.05
+    zeta, wn, sd = calculate_desired_poles(p['overshoot'], p['ts'], criterion=ts_criterion_val)
+elif req_type_state == "Zeta e Omega_n":
+    zeta = p['zeta']
+    wn = p['wn']
+    sigma = zeta * wn
+    wd = wn * np.sqrt(1 - zeta**2) if zeta <= 1 else 0
+    sd = complex(-sigma, wd)
+else:
+    sd = complex(p['sd_real'], p['sd_imag'])
+    wn = abs(sd)
+    zeta = -sd.real / wn if wn != 0 else 0
 
 # Exibir Planta Inicial
 st.header("📊 Planta Original $G(s)$")
@@ -153,11 +183,17 @@ st.markdown("---")
 st.header("📝 Algoritmo de Projeto (6 Passos)")
 
 # 1. Polos Dominantes
-with st.expander("**Passo 1:** Traduzir especificações para Polos Dominantes ($s_d$)", expanded=True):
-    st.markdown(f"Usando as fórmulas clássicas para sistemas de 2ª ordem subamortecidos (critério de acomodação de {p.get('ts_criterion', '2%')}):")
-    st.latex(r"\zeta = \frac{-\ln(\%OS / 100)}{\sqrt{\pi^2 + \ln^2(\%OS / 100)}} \quad \text{e} \quad \omega_n = \frac{" + ("4" if ts_criterion_val == 0.02 else "3") + r"}{\zeta T_s}")
-    
-    st.markdown(f"Para um Sobressinal de **{p['overshoot']}%** e Tempo de Acomodação de **{p['ts']} s**:")
+with st.expander("**Passo 1:** Determinação dos Polos Dominantes ($s_d$)", expanded=True):
+    if req_type_state == "Sobressinal e Tempo de Acomodação":
+        ts_criterion_val = 0.02 if p.get('ts_criterion', '2%') == '2%' else 0.05
+        st.markdown(f"Usando as fórmulas clássicas para sistemas de 2ª ordem subamortecidos (critério de acomodação de {p.get('ts_criterion', '2%')}):")
+        st.latex(r"\zeta = \frac{-\ln(\%OS / 100)}{\sqrt{\pi^2 + \ln^2(\%OS / 100)}} \quad \text{e} \quad \omega_n = \frac{" + ("4" if ts_criterion_val == 0.02 else "3") + r"}{\zeta T_s}")
+        st.markdown(f"Para um Sobressinal de **{p['overshoot']}%** e Tempo de Acomodação de **{p['ts']} s**:")
+    elif req_type_state == "Zeta e Omega_n":
+        st.markdown(r"Os parâmetros $\zeta$ e $\omega_n$ foram fornecidos diretamente pelo usuário:")
+    else:
+        st.markdown(r"O polo desejado $s_d$ foi fornecido diretamente pelo usuário. Os valores equivalentes de $\zeta$ e $\omega_n$ são:")
+        
     st.latex(rf"\zeta = {zeta:.4f}")
     st.latex(rf"\omega_n = {wn:.4f} \text{{ rad/s}}")
     
@@ -172,7 +208,21 @@ with st.expander("**Passo 2:** Verificar suficiência de um Controlador Proporci
     
     angles_poles, angles_zeros, sum_theta, sum_phi, angle_G, phi_zc = calculate_angle_condition(all_poles, all_zeros, sd)
     
+    def format_cplx(c):
+        if np.isclose(c.imag, 0): return f"{c.real:g}"
+        if np.isclose(c.real, 0): return f"{c.imag:g}j"
+        return f"({c.real:g} {'+' if c.imag > 0 else '-'} {abs(c.imag):g}j)"
+
+    if all_poles:
+        st.markdown(r"**Contribuição de cada Polo ($\theta_j$):**")
+        for i, (p_val, ang) in enumerate(zip(all_poles, angles_poles), start=1):
+            st.latex(rf"\theta_{{{i}}} = \angle(s_d - {format_cplx(p_val)}) = {ang:.2f}^\circ")
     st.markdown(rf"- **Soma dos ângulos dos Polos ($\sum \theta_j$):** {sum_theta:.2f}°")
+    
+    if all_zeros:
+        st.markdown(r"**Contribuição de cada Zero ($\phi_i$):**")
+        for i, (z_val, ang) in enumerate(zip(all_zeros, angles_zeros), start=1):
+            st.latex(rf"\phi_{{{i}}} = \angle(s_d - {format_cplx(z_val)}) = {ang:.2f}^\circ")
     st.markdown(rf"- **Soma dos ângulos dos Zeros ($\sum \phi_i$):** {sum_phi:.2f}°")
     
     st.latex(rf"\angle G(s_d) = {sum_theta:.2f}^\circ - {sum_phi:.2f}^\circ = {angle_G:.2f}^\circ")
@@ -207,27 +257,70 @@ with st.expander("**Passo 3:** Localizar o zero compensador ($z_c$)"):
 
 # 4. Calcular Ganhos
 with st.expander("**Passo 4:** Calcular o ganho total requerido ($K_d$) e proporcional ($K_p$)"):
-    st.markdown("Aplicamos o **Critério de Módulo** no ponto $s_d$ para garantir que o ganho de malha aberta seja igual a 1:")
-    st.latex(r"|G_c(s_d) G(s_d)| = 1 \implies K_d = \frac{1}{|(s_d + z_c) G(s_d)|}")
+    st.markdown("Aplicamos o **Critério de Módulo** no ponto $s_d$ para garantir que o ganho de malha aberta seja igual a 1. Geometricamente, o ganho é a razão entre o produto das distâncias dos polos até $s_d$ e o produto das distâncias dos zeros até $s_d$:")
+    st.latex(r"K = \frac{\prod \text{distâncias aos polos}}{\prod \text{distâncias aos zeros}} = \frac{\prod |s_d - p_j|}{\prod |s_d - z_i|}")
     
     if not needs_pd:
         # Just P controller
-        G_val = complex((G_num_sym / G_den_sym).subs(s, sd).evalf())
-        Kp = 1.0 / abs(G_val)
+        dist_poles = [abs(sd - p) for p in all_poles]
+        dist_zeros = [abs(sd - z) for z in all_zeros]
+        
+        prod_poles = np.prod(dist_poles) if dist_poles else 1.0
+        prod_zeros = np.prod(dist_zeros) if dist_zeros else 1.0
+        
+        Kp = prod_poles / prod_zeros
         Kd = 0.0
-        st.latex(r"|K_p G(s_d)| = 1")
+        
+        st.markdown("**Distâncias calculadas:**")
+        if all_poles:
+            st.markdown(r"**Distância a cada Polo da planta ($L_{p_j}$):**")
+            for i, (p_val, d) in enumerate(zip(all_poles, dist_poles), start=1):
+                st.latex(rf"L_{{p_{i}}} = |s_d - {format_cplx(p_val)}| = {d:.4f}")
+        st.markdown(f"- Produto das distâncias aos Polos da planta: **{prod_poles:.4f}**")
+        
+        if all_zeros:
+            st.markdown(r"**Distância a cada Zero da planta ($L_{z_i}$):**")
+            for i, (z_val, d) in enumerate(zip(all_zeros, dist_zeros), start=1):
+                st.latex(rf"L_{{z_{i}}} = |s_d - {format_cplx(z_val)}| = {d:.4f}")
+            st.markdown(f"- Produto das distâncias aos Zeros da planta: **{prod_zeros:.4f}**")
+            
+        st.latex(rf"K_p = \frac{{{prod_poles:.4f}}}{{{prod_zeros:.4f}}} = {Kp:.4f}")
         st.success(rf"**$K_p = {Kp:.4f}$**, e **$K_d = 0$** (Apenas Controlador P)")
     else:
         if zc != float('inf'):
             Kd, Kp = calculate_pd_gain(G_num_sym, G_den_sym, s, zc, sd)
-            st.latex(rf"K_d = \frac{{1}}{{|({sd.real:.4f} + {sd.imag:.4f}j + {zc:.4f}) G(s_d)|}}")
+            
+            dist_poles = [abs(sd - p) for p in all_poles]
+            dist_zeros = [abs(sd - z) for z in all_zeros]
+            dist_zc = abs(sd + zc)
+            
+            prod_poles = np.prod(dist_poles) if dist_poles else 1.0
+            prod_zeros = np.prod(dist_zeros) if dist_zeros else 1.0
+            
+            st.markdown("**Distâncias calculadas:**")
+            if all_poles:
+                st.markdown(r"**Distância a cada Polo da planta ($L_{p_j}$):**")
+                for i, (p_val, d) in enumerate(zip(all_poles, dist_poles), start=1):
+                    st.latex(rf"L_{{p_{i}}} = |s_d - {format_cplx(p_val)}| = {d:.4f}")
+            st.markdown(f"- Produto das distâncias aos Polos da planta: **{prod_poles:.4f}**")
+            
+            if all_zeros:
+                st.markdown(r"**Distância a cada Zero da planta ($L_{z_i}$):**")
+                for i, (z_val, d) in enumerate(zip(all_zeros, dist_zeros), start=1):
+                    st.latex(rf"L_{{z_{i}}} = |s_d - {format_cplx(z_val)}| = {d:.4f}")
+                st.markdown(f"- Produto das distâncias aos Zeros da planta: **{prod_zeros:.4f}**")
+                
+            st.markdown(r"**Distância ao Zero do Controlador PD ($L_{zc}$):**")
+            st.latex(rf"L_{{zc}} = |s_d - ({-zc:.4f})| = {dist_zc:.4f}")
+            
+            st.latex(rf"K_d = \frac{{{prod_poles:.4f}}}{{{dist_zc:.4f} \times {prod_zeros:.4f}}}")
             st.success(rf"**$K_d = {Kd:.4f}$**")
             
             st.markdown(r"Sabendo que $K_p = K_d \cdot z_c$:")
             st.success(rf"**$K_p = {Kp:.4f}$**")
             
             st.markdown(f"**Equação final do Controlador PD:**")
-            st.latex(rf"G_c(s) = {Kp:.4f} + {Kd:.4f}s")
+            st.latex(rf"G_c(s) = {Kp:.4f} + {Kd:.4f}s = {Kd:.4f}(s + {zc:.4f})")
         else:
             Kp, Kd = 0, 0
             st.error("Falha ao calcular ganho.")
