@@ -50,7 +50,7 @@ def compute_numerical_root_locus(num, den, k_max=10000, k_points=10000):
     """Compute numerical root locus with logarithmic K spacing and root tracking."""
     K_vals = np.concatenate([
         [0],
-        np.logspace(-3, np.log10(k_max), k_points - 1)  # fixme
+        np.logspace(-3, np.log10(k_max), k_points - 1)  # fixme: improper k range scale
     ])
 
     eq0 = np.polyadd(den, K_vals[0] * num)
