@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from .utils import get_multiplicity_info
 
 def draw_real_axis_segments(ax, rl_segments, alpha=1.0):

@@ -1,33 +1,19 @@
 import sympy as sp
 import numpy as np
 
-def poly_to_latex(coeffs, var='s'):
-    """Convert numpy polynomial coefficients to LaTeX string."""
-    if not coeffs.any():
-        return "0"
-    latex_parts = []
-    degree = len(coeffs) - 1
-    for i, coeff in enumerate(coeffs):
-        if coeff == 0:
-            continue
-        term = ""
-        if coeff > 0 and latex_parts:
-            term += "+"
-        elif coeff < 0:
-            term += "-"
-        coeff = abs(coeff)
-        if coeff != 1 or (degree - i) == 0:
-            term += str(int(coeff))
-        if (degree - i) > 0:
-            term += var
-            if (degree - i) > 1:
-                term += f"^{{{degree - i}}}"
-        latex_parts.append(term)
-    return "".join(latex_parts).replace("+-", "-").replace("++", "+")
-
 def array_to_sym(coeffs, var):
     """Convert numpy coefficient array to sympy polynomial."""
     return sum(c * var**i for i, c in enumerate(reversed(coeffs)))
+
+def sym_to_latex(expr_sym, decimals=4):
+    """Clean format sympy floats then return latex string."""
+    if not isinstance(expr_sym, sp.Basic):
+        expr_sym = sp.sympify(expr_sym)
+    repl = {}
+    for x in expr_sym.atoms(sp.Float):
+        v = round(float(x), decimals)
+        repl[x] = sp.Integer(int(v)) if v.is_integer() else sp.Float(v)
+    return sp.latex(expr_sym.xreplace(repl))
 
 def fatorar_numerico(polinomio, var):
     """Numerically factorize a polynomial."""

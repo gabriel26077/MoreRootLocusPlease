@@ -2,7 +2,7 @@ import streamlit as st
 import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
-from src.utils import get_multiplicity_info
+from src.utils import get_multiplicity_info, sym_to_latex
 from src.plotting import plot_poles_zeros_with_multiplicity, draw_real_axis_segments, plot_base_lgr, setup_lgr_axes
 from src.control_math import calculate_break_points, calculate_departure_arrival_angles
 
@@ -13,13 +13,12 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
     # --- Passo 1 ---
     with st.expander("**Passo 1:** Escrever Polinômio Característico $P(s)$", expanded=True):
         st.markdown("Escrever o polinômio característico de modo que $K$ apareça claramente:")
-        latex_final = rf"1 + G(s)H(s) = 1 + k{sp.latex(GH_expr_expanded_den)} = 1 + kP(s)"
-        st.latex(latex_final)
+        st.latex(rf"1 + G(s)H(s) = 1 + k{sym_to_latex(GH_expr_expanded_den)} = 1 + kP(s)")
     
     # --- Passo 2 ---
     with st.expander("**Passo 2:** Fatorar $P(s)$ em polos e zeros"):
-        st.latex(rf"P(s) = {sp.latex(GH_final_display)}")
-    
+        st.latex(rf"P(s) = {sym_to_latex(GH_final_display)}")
+
     # --- Passo 3 ---
     with st.expander("**Passo 3:** Marcar polos e zeros no plano complexo"):
         col1, col2 = st.columns(2)
@@ -164,14 +163,14 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         K_expr_break, break_eq, break_roots_complex, valid_break_points = calculate_break_points(P_num_sym, P_den_sym, s, rl_segments)
     
         st.markdown(r"**1º Encontrar $p(s)$:**")
-        st.latex(rf"p(s) = -\frac{{1}}{{P(s)}} = -\frac{{D(s)}}{{N(s)}} = {sp.latex(K_expr_break)}")
+        st.latex(rf"p(s) = -\frac{{1}}{{P(s)}} = -\frac{{D(s)}}{{N(s)}} = {sym_to_latex(sp.cancel(K_expr_break))}")
     
         st.markdown(r"**2º Determinar as raízes de $\frac{dp(s)}{ds} = 0$:**")
         dK_ds_simplified = sp.cancel(sp.diff(K_expr_break, s))
-        st.latex(rf"\frac{{dp(s)}}{{ds}} = {sp.latex(dK_ds_simplified)}")
+        st.latex(rf"\frac{{dp(s)}}{{ds}} = {sym_to_latex(dK_ds_simplified)}")
     
         st.markdown(r"Para a derivada ser zero, basta que o polinômio do numerador seja zero:")
-        st.latex(rf"{sp.latex(sp.expand(break_eq))} = 0")
+        st.latex(rf"{sym_to_latex(sp.expand(break_eq))} = 0")
     
         tol = 1e-5
         all_roots_str = ", ".join([f"{r.real:.4f} + {r.imag:.4f}j" if abs(r.imag) > tol else f"{r.real:.4f}" for r in break_roots_complex])
@@ -237,8 +236,8 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
     
         st.markdown("### Cruzamento com o Eixo Imaginário")
         st.markdown(r"Equação Característica $1 + k \frac{N(s)}{D(s)} = 0 \implies D(s) + kN(s) = 0$:")
-        st.latex(rf"{sp.latex(CE_expr)} = 0")  # todo: gather polinomial coefficients
-    
+        st.latex(rf"{sym_to_latex(sp.collect(CE_expr, s))} = 0")
+
         # Build Routh table
         routh_table = []
         row0 = coeffs_routh[0::2]
@@ -268,7 +267,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         for i, row in enumerate(routh_table):
             power = n_routh - i
             row_str = f"| $s^{power}$ | "
-            row_str += " | ".join([f"${sp.latex(sp.cancel(elem))}$" if str(elem) != "0" else "$0$" for elem in row]) + " |\n"
+            row_str += " | ".join([f"${sym_to_latex(elem)}$" if str(elem) != "0" else "$0$" for elem in row]) + " |\n"
             table_md += row_str
     
         st.markdown("### Tabela de Routh-Hurwitz:")
@@ -277,7 +276,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         # Find stability margin
         s1_elem = routh_table[n_routh-1][0]
         st.markdown(r"Para encontrar a margem de estabilidade, forçamos o primeiro termo da linha $s^1$ a ser zero:")
-        st.latex(rf"{sp.latex(sp.cancel(s1_elem))} = 0")
+        st.latex(rf"{sym_to_latex(sp.cancel(s1_elem))} = 0")
     
         k_crits = []
         crossing_points = []
@@ -295,7 +294,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
             B = aux_row[1].subs(k, kc)
             aux_eq = sp.simplify(A * s**2 + B)
             st.markdown(rf"Para o ganho crítico $k = {kc:.4f}$, a equação auxiliar (da linha $s^2$) é:")
-            st.latex(rf"{sp.latex(aux_eq)} = 0")
+            st.latex(rf"{sym_to_latex(aux_eq)} = 0")
             roots_aux = sp.solve(aux_eq, s)
             for r in roots_aux:
                 crossing_points.append(complex(r))

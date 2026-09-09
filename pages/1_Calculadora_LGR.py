@@ -7,9 +7,8 @@ import streamlit as st
 import numpy as np
 import sympy as sp
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyArrowPatch
 
-from src.utils import poly_to_latex, array_to_sym, fatorar_numerico, get_multiplicity_info, parse_to_coeffs
+from src.utils import array_to_sym, fatorar_numerico, get_multiplicity_info, parse_to_coeffs, sym_to_latex
 from src.control_math import compute_real_axis_segments, sort_roots_by_proximity, compute_numerical_root_locus, calculate_break_points, calculate_departure_arrival_angles
 from src.plotting import draw_real_axis_segments, plot_poles_zeros_with_multiplicity, plot_base_lgr, setup_lgr_axes
 
@@ -193,12 +192,12 @@ st.header("Funções de Transferência:")
 col_gs, col_hs, col_test = st.columns(3)
 with col_gs:
     G_display = sp.Rational(1) * G_num_s / G_den_s
-    st.latex(rf"G(s) = {sp.latex(G_display)}")
+    st.latex(rf"G(s) = {sym_to_latex(G_display)}")
 with col_hs:
     H_display = sp.Rational(1) * H_num_s / H_den_s
-    st.latex(rf"H(s) = {sp.latex(H_display)}")
+    st.latex(rf"H(s) = {sym_to_latex(H_display)}")
 with col_test:
-    st.markdown(f'Ponto de teste: $s_i = {sp.latex(s_test_real + 1j * s_test_imag)}$')
+    st.markdown(f'Ponto de teste: $s_i = {sym_to_latex(s_test_real + 1j * s_test_imag)}$')
 
 st.markdown("---")
 
