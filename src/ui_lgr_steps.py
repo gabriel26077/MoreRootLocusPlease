@@ -9,7 +9,7 @@ from src.control_math import calculate_break_points, calculate_departure_arrival
 def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_zeros, rl_segments, Np, Nz, Ls, Na, P_num_sym, P_den_sym, all_roots, s_test_real, s_test_imag, threshold):
     # ============================================================
     st.header("Algoritmo dos 12 Passos")
-    
+
     # --- Passo 1 ---
     with st.expander("**Passo 1:** Polinômio Característico", expanded=True):
         st.markdown("Escrever o polinômio característico de modo que K apareça claramente:")
@@ -485,95 +485,96 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                     )
                     st.success(rf"$\theta_a = {angle_arr:.2f}°$")
                     st.markdown("---")
+
+                    # --- Plot ---
+                    fig10, ax10 = plt.subplots(figsize=(15, 8))
+                    plot_base_lgr(ax10, all_poles, all_zeros, rl_segments, all_roots)
+                    if Na > 0:
+                        line_length = 40
+                        for i, angle in enumerate(angles_rad):
+                            dx = line_length * np.cos(angle)
+                            dy = line_length * np.sin(angle)
+                            ax10.plot([sigma_A, sigma_A + dx], [0, dy], '--', color='darkorange',
+                                      alpha=0.4, linewidth=2, label='Assíntotas' if i == 0 else "")
+                    if valid_break_points:
+                        ax10.plot(valid_break_points, [0] * len(valid_break_points), 'd', markersize=12,
+                                  color='magenta', markeredgewidth=2, label='Pontos Saída/Entrada')
+                    if valid_crossings:
+                        cross_y = [pt.imag for pt in valid_crossings]
+                        ax10.plot([0] * len(valid_crossings), cross_y, '*', markersize=18, color='cyan',
+                                  markeredgewidth=2, markeredgecolor='black', label='Cruzamento jω')
+
+                    arrow_len = 1.5
+                    text_offset = 0.8
+                    extra_x = [p.real for p in all_poles] + [z.real for z in all_zeros]
+                    extra_y = [p.imag for p in all_poles] + [z.imag for z in all_zeros]
+                    for seg in rl_segments:
+                        extra_x.extend([seg[0], seg[1]])
+                    if Na > 0:
+                        extra_x.append(sigma_A)
+                    extra_x.extend(valid_break_points)
+
+                    # Draw departure arrows (red, outward from pole)
+                    for pk, angle_deg in departure_angles.items():
+                        angle_rad_d = np.radians(angle_deg)
+                        dx = arrow_len * np.cos(angle_rad_d)
+                        dy = arrow_len * np.sin(angle_rad_d)
+                        ax10.annotate('', xy=(pk.real + dx, pk.imag + dy),
+                                      xytext=(pk.real, pk.imag),
+                                      arrowprops=dict(arrowstyle='->', color='darkred', lw=2, mutation_scale=15))
+                        tx = pk.real + (arrow_len + text_offset) * np.cos(angle_rad_d)
+                        ty = pk.imag + (arrow_len + text_offset) * np.sin(angle_rad_d)
+                        if abs(np.sin(angle_rad_d)) < 0.3:
+                            ty += 0.6 * np.sign(pk.imag)
+                        ax10.text(tx, ty, f'{angle_deg:.1f}°', color='darkred', fontsize=10, fontweight='bold',
+                                  ha='center', va='center',
+                                  bbox=dict(facecolor='white', edgecolor='darkred',
+                                            boxstyle='round,pad=0.2', alpha=0.9))
+                        extra_x.append(pk.real + (arrow_len + text_offset + 1) * np.cos(angle_rad_d))
+                        extra_y.append(pk.imag + (arrow_len + text_offset + 1) * np.sin(angle_rad_d))
+
+                    # Draw arrival arrows (green, outward from zero)
+                    for zk, angle_deg in arrival_angles.items():
+                        angle_rad_a = np.radians(angle_deg)
+                        dx = arrow_len * np.cos(angle_rad_a)
+                        dy = arrow_len * np.sin(angle_rad_a)
+                        ax10.annotate('', xy=(zk.real + dx, zk.imag + dy),
+                                      xytext=(zk.real, zk.imag),
+                                      arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2, mutation_scale=15))
+                        tx = zk.real + (arrow_len + text_offset) * np.cos(angle_rad_a)
+                        ty = zk.imag + (arrow_len + text_offset) * np.sin(angle_rad_a)
+                        ax10.text(tx, ty, f'{angle_deg:.1f}°', color='darkgreen', fontsize=10, fontweight='bold',
+                                  ha='center', va='center',
+                                  bbox=dict(facecolor='white', edgecolor='darkgreen',
+                                            boxstyle='round,pad=0.2', alpha=0.9))
+                        extra_x.append(zk.real + (arrow_len + text_offset + 1) * np.cos(angle_rad_a))
+                        extra_y.append(zk.imag + (arrow_len + text_offset + 1) * np.sin(angle_rad_a))
+
+                    # Set limits to include all arrows and text
+                    if extra_x:
+                        x_min10, x_max10 = min(extra_x), max(extra_x)
+                        x_span10 = x_max10 - x_min10
+                        pad_x10 = x_span10 * 0.25 if x_span10 > 0 else 5.0
+                        ax10.set_xlim(x_min10 - pad_x10, max(x_max10 + pad_x10, 5))
+                    if extra_y:
+                        y_abs = [abs(y) for y in extra_y]
+                        y_limit10 = max(y_abs) + 4 if y_abs else 8
+                        ax10.set_ylim(-y_limit10, y_limit10)
+
+                    ax10.set_aspect('auto')
+                    ax10.set_title('Lugar das Raízes com Vetores de Partida/Chegada', fontsize=16, pad=20)
+                    ax10.set_xlabel(r'Eixo Real ($\sigma$)', fontsize=14)
+                    ax10.set_ylabel(r'Eixo Imaginário ($j\omega$)', fontsize=14)
+                    ax10.grid(True, linestyle=':', alpha=0.7)
+                    handles, labels = ax10.get_legend_handles_labels()
+                    by_label = dict(zip(labels, handles))
+                    ax10.legend(by_label.values(), by_label.keys(), loc='upper right', fontsize=11)
+                    plt.tight_layout()
+                    st.pyplot(fig10)
+
             else:
                 st.info("Não há zeros complexos — ângulos de chegada não são aplicáveis.")
-    
-        # --- Plot ---
-        fig10, ax10 = plt.subplots(figsize=(15, 8))
-        plot_base_lgr(ax10, all_poles, all_zeros, rl_segments, all_roots)
-        if Na > 0:
-            line_length = 40
-            for i, angle in enumerate(angles_rad):
-                dx = line_length * np.cos(angle)
-                dy = line_length * np.sin(angle)
-                ax10.plot([sigma_A, sigma_A + dx], [0, dy], '--', color='darkorange',
-                          alpha=0.4, linewidth=2, label='Assíntotas' if i == 0 else "")
-        if valid_break_points:
-            ax10.plot(valid_break_points, [0]*len(valid_break_points), 'd', markersize=12,
-                      color='magenta', markeredgewidth=2, label='Pontos Saída/Entrada')
-        if valid_crossings:
-            cross_y = [pt.imag for pt in valid_crossings]
-            ax10.plot([0]*len(valid_crossings), cross_y, '*', markersize=18, color='cyan',
-                      markeredgewidth=2, markeredgecolor='black', label='Cruzamento jω')
-    
-        arrow_len = 1.5
-        text_offset = 0.8
-        extra_x = [p.real for p in all_poles] + [z.real for z in all_zeros]
-        extra_y = [p.imag for p in all_poles] + [z.imag for z in all_zeros]
-        for seg in rl_segments:
-            extra_x.extend([seg[0], seg[1]])
-        if Na > 0:
-            extra_x.append(sigma_A)
-        extra_x.extend(valid_break_points)
-    
-        # Draw departure arrows (red, outward from pole)
-        for pk, angle_deg in departure_angles.items():
-            angle_rad_d = np.radians(angle_deg)
-            dx = arrow_len * np.cos(angle_rad_d)
-            dy = arrow_len * np.sin(angle_rad_d)
-            ax10.annotate('', xy=(pk.real + dx, pk.imag + dy),
-                          xytext=(pk.real, pk.imag),
-                          arrowprops=dict(arrowstyle='->', color='darkred', lw=2, mutation_scale=15))
-            tx = pk.real + (arrow_len + text_offset) * np.cos(angle_rad_d)
-            ty = pk.imag + (arrow_len + text_offset) * np.sin(angle_rad_d)
-            if abs(np.sin(angle_rad_d)) < 0.3:
-                ty += 0.6 * np.sign(pk.imag)
-            ax10.text(tx, ty, f'{angle_deg:.1f}°', color='darkred', fontsize=10, fontweight='bold',
-                      ha='center', va='center',
-                      bbox=dict(facecolor='white', edgecolor='darkred',
-                                boxstyle='round,pad=0.2', alpha=0.9))
-            extra_x.append(pk.real + (arrow_len + text_offset + 1) * np.cos(angle_rad_d))
-            extra_y.append(pk.imag + (arrow_len + text_offset + 1) * np.sin(angle_rad_d))
-    
-        # Draw arrival arrows (green, outward from zero)
-        for zk, angle_deg in arrival_angles.items():
-            angle_rad_a = np.radians(angle_deg)
-            dx = arrow_len * np.cos(angle_rad_a)
-            dy = arrow_len * np.sin(angle_rad_a)
-            ax10.annotate('', xy=(zk.real + dx, zk.imag + dy),
-                          xytext=(zk.real, zk.imag),
-                          arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2, mutation_scale=15))
-            tx = zk.real + (arrow_len + text_offset) * np.cos(angle_rad_a)
-            ty = zk.imag + (arrow_len + text_offset) * np.sin(angle_rad_a)
-            ax10.text(tx, ty, f'{angle_deg:.1f}°', color='darkgreen', fontsize=10, fontweight='bold',
-                      ha='center', va='center',
-                      bbox=dict(facecolor='white', edgecolor='darkgreen',
-                                boxstyle='round,pad=0.2', alpha=0.9))
-            extra_x.append(zk.real + (arrow_len + text_offset + 1) * np.cos(angle_rad_a))
-            extra_y.append(zk.imag + (arrow_len + text_offset + 1) * np.sin(angle_rad_a))
-    
-        # Set limits to include all arrows and text
-        if extra_x:
-            x_min10, x_max10 = min(extra_x), max(extra_x)
-            x_span10 = x_max10 - x_min10
-            pad_x10 = x_span10 * 0.25 if x_span10 > 0 else 5.0
-            ax10.set_xlim(x_min10 - pad_x10, max(x_max10 + pad_x10, 5))
-        if extra_y:
-            y_abs = [abs(y) for y in extra_y]
-            y_limit10 = max(y_abs) + 4 if y_abs else 8
-            ax10.set_ylim(-y_limit10, y_limit10)
-    
-        ax10.set_aspect('auto')
-        ax10.set_title('Lugar das Raízes com Vetores de Partida/Chegada', fontsize=16, pad=20)
-        ax10.set_xlabel(r'Eixo Real ($\sigma$)', fontsize=14)
-        ax10.set_ylabel(r'Eixo Imaginário ($j\omega$)', fontsize=14)
-        ax10.grid(True, linestyle=':', alpha=0.7)
-        handles, labels = ax10.get_legend_handles_labels()
-        by_label = dict(zip(labels, handles))
-        ax10.legend(by_label.values(), by_label.keys(), loc='upper right', fontsize=11)
-        plt.tight_layout()
-        st.pyplot(fig10)
-    
+
     # --- Passo 11: Critério de Ângulo ---
     with st.expander("**Passo 11:** Critério de Ângulo"):
         s_test = complex(s_test_real, s_test_imag)
