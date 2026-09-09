@@ -334,7 +334,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         st.pyplot(fig9)
     
     # --- Passo 10: Ângulos de Partida e Chegada ---
-    with st.expander("**Passo 10:** Ângulos de Partida e Chegada"):
+    with st.expander("**Passo 10:** Ângulos de Partida e Chegada"):  # todo: use tabs
         st.markdown("### *Ângulos de Partida* (dos polos complexos) e *Ângulos de Chegada* (nos zeros complexos)")
         st.markdown(r"""
     O *ângulo de partida* indica a **direção** em que o lugar das raízes "sai" de um polo complexo 
@@ -358,7 +358,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
             # ===================== DEPARTURE ANGLES =====================
             if complex_poles_10:
                 st.markdown("---")
-                st.markdown("#### Ângulos de Partida ($\\theta_d$) — Saída dos polos complexos")
+                st.markdown("### Ângulos de Partida ($\\theta_d$) — Saída dos polos complexos")
                 st.markdown(r"""
     **Condição de ângulo** aplicada a um ponto $s$ infinitesimalmente próximo do polo $p_k$:
     
@@ -376,55 +376,60 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                     angle_dep, angles_from_other_poles, angles_from_zeros = departure_angles_full[pk]
                     other_poles = [p for p in all_poles if not np.isclose(pk, p)]
     
-                    st.markdown(f"##### Polo $p_k = {pk.real:.4f}{pk.imag:+.4f}j$")
+                    st.markdown(f"#### Polo $p_k = {pk.real:.4f}{pk.imag:+.4f}j$")
     
                     # Show each vector and angle from other poles
-                    st.markdown("**Ângulos dos vetores dos outros polos até $p_k$:**")
+                    st.markdown("Ângulos dos vetores dos outros polos até $p_k$:")
                     for i, (p, ang) in enumerate(zip(other_poles, angles_from_other_poles)):
                         vec = pk - p
-                        st.latex(  # todo: change display format (results in new line)
+                        st.latex(
                             rf"\theta_{{{i+1}}} = \angle(p_k - p_{{{i+1}}}) = "
                             rf"\angle\big(({pk.real:.4f}{pk.imag:+.4f}j) - ({p.real:.4f}{p.imag:+.4f}j)\big) = "
                             rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
                         )
+                        st.latex(rf'\boxed{{\theta_{{{i+1}}} = {ang%360:.2f}°}}')
     
                     # Show each vector and angle from zeros
                     if all_zeros:
-                        st.markdown("**Ângulos dos vetores dos zeros até $p_k$:**")
+                        st.markdown("Ângulos dos vetores dos zeros até $p_k$:")
                         for j, (z, ang) in enumerate(zip(all_zeros, angles_from_zeros)):
                             vec = pk - z
-                            st.latex(  # todo: change display format (results in new line)
+                            st.latex(
                                 rf"\phi_{{{j+1}}} = \angle(p_k - z_{{{j+1}}}) = "
                                 rf"\angle\big(({pk.real:.4f}{pk.imag:+.4f}j) - ({z.real:.4f}{z.imag:+.4f}j)\big) = "
                                 rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
                             )
+                            st.latex(rf'\boxed{{\phi_{{{i + 1}}} = {ang%360:.2f}°}}')
                     else:
-                        st.markdown(r"*Não há zeros finitos, logo $\sum \phi_j = 0°$*")
+                        st.markdown(r"Não há zeros finitos, logo $\sum \phi_j = 0°$")
     
                     # Show summations with explicit terms
                     sum_theta = sum(angles_from_other_poles)
                     sum_phi = sum(angles_from_zeros)
-    
+
+                    st.markdown('Somatórios:')
                     theta_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_other_poles])
                     st.latex(rf"\sum \theta_i = {theta_terms} = {sum_theta:.2f}°")
-    
+                    st.latex(rf"\boxed{{\sum \theta_i = {sum_theta%360:.2f}°}}")
+
                     if angles_from_zeros:
                         phi_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_zeros])
                         st.latex(rf"\sum \phi_j = {phi_terms} = {sum_phi:.2f}°")
-    
+                        st.latex(rf"\boxed{{\sum \phi_j = {sum_phi%360:.2f}°}}")
+
                     # Final substitution
                     st.latex(
                         rf"\theta_d = 180° - ({sum_theta:.2f}°) + ({sum_phi:.2f}°) = "
                         rf"180° {-sum_theta:+.2f}° {sum_phi:+.2f}°"
                     )
-                    st.success(rf"$\theta_d = {angle_dep:.2f}°$")  # todo: format [0,360]
+                    st.success(rf"$\theta_d = {angle_dep:.2f}° = {angle_dep%360:.2f}°$")
                     st.markdown("---")
             else:
-                st.info("Não há polos complexos — ângulos de partida não são aplicáveis.")
+                st.info("*Não há polos complexos — ângulos de partida não são aplicáveis.*")
     
             # ===================== ARRIVAL ANGLES =====================
             if complex_zeros_10:
-                st.markdown("#### Ângulos de Chegada ($\\theta_a$) — Entrada nos zeros complexos")
+                st.markdown("### Ângulos de Chegada ($\\theta_a$) — Entrada nos zeros complexos")
                 st.markdown(r"""
     **Condição de ângulo** aplicada a um ponto $s$ infinitesimalmente próximo do zero $z_k$:
     
@@ -442,10 +447,10 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                     angle_arr, angles_from_other_zeros, angles_from_poles = arrival_angles_full[zk]
                     other_zeros = [z for z in all_zeros if not np.isclose(zk, z)]
     
-                    st.markdown(f"##### Zero $z_k = {zk.real:.4f}{zk.imag:+.4f}j$")
+                    st.markdown(f"### Zero $z_k = {zk.real:.4f}{zk.imag:+.4f}j$")
     
                     # Show each vector and angle from poles
-                    st.markdown("**Ângulos dos vetores dos polos até $z_k$:**")
+                    st.markdown("Ângulos dos vetores dos polos até $z_k$:")
                     for i, (p, ang) in enumerate(zip(all_poles, angles_from_poles)):
                         vec = zk - p
                         st.latex(
@@ -453,10 +458,12 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                             rf"\angle\big(({zk.real:.4f}{zk.imag:+.4f}j) - ({p.real:.4f}{p.imag:+.4f}j)\big) = "
                             rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
                         )
+                        st.latex(rf'\boxed{{\theta_{{{i+1}}} = {ang%360:.2f}°}}')
+
     
                     # Show each vector and angle from other zeros
                     if other_zeros:
-                        st.markdown("**Ângulos dos vetores dos outros zeros até $z_k$:**")
+                        st.markdown("Ângulos dos vetores dos outros zeros até $z_k$:")
                         for j, (z, ang) in enumerate(zip(other_zeros, angles_from_other_zeros)):
                             vec = zk - z
                             st.latex(
@@ -464,26 +471,30 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                                 rf"\angle\big(({zk.real:.4f}{zk.imag:+.4f}j) - ({z.real:.4f}{z.imag:+.4f}j)\big) = "
                                 rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
                             )
+                            st.latex(rf'\boxed{{\phi_{{{i + 1}}} = {ang%360:.2f}°}}')
                     else:
                         st.markdown(r"*Não há outros zeros, logo $\sum \phi_j = 0°$*")
     
                     # Show summations with explicit terms
                     sum_phi_z = sum(angles_from_other_zeros)
                     sum_theta_z = sum(angles_from_poles)
-    
+
+                    st.markdown('Somatórios:')
                     theta_z_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_poles])
                     st.latex(rf"\sum \theta_i = {theta_z_terms} = {sum_theta_z:.2f}°")
-    
+                    st.latex(rf"\boxed{{\sum \theta_i = {sum_theta_z%360:.2f}°}}")
+
                     if angles_from_other_zeros:
                         phi_z_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_other_zeros])
                         st.latex(rf"\sum \phi_j = {phi_z_terms} = {sum_phi_z:.2f}°")
-    
+                        st.latex(rf"\boxed{{\sum \phi_j = {sum_phi_z%360:.2f}°}}")
+
                     # Final substitution
                     st.latex(
                         rf"\theta_a = 180° - ({sum_phi_z:.2f}°) + ({sum_theta_z:.2f}°) = "
                         rf"180° {-sum_phi_z:+.2f}° {sum_theta_z:+.2f}°"
                     )
-                    st.success(rf"$\theta_a = {angle_arr:.2f}°$")
+                    st.success(rf"$\theta_a = {angle_arr:.2f}° = {angle_arr%360:.2f}°$")
                     st.markdown("---")
 
                     # --- Plot ---  # fixme: needs to plot if there is only complex zeroes or complex poles
@@ -582,62 +593,64 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         st.markdown('onde $q \in \{0,...,n_p-n_z-1\}$.')
 
         s_test = complex(s_test_real, s_test_imag)
-    
+
         st.markdown(f"**Ponto de teste:** $s_i = {s_test.real} {s_test.imag:+}j$")
-    
+
         theta_poles = [np.degrees(np.angle(s_test - p)) for p in all_poles]
         phi_zeros = [np.degrees(np.angle(s_test - z)) for z in all_zeros]
-    
+
         sum_theta = sum(theta_poles)
         sum_phi = sum(phi_zeros)
         total_angle = sum_theta - sum_phi
         total_angle_norm = total_angle % 360.0
         is_on_lgr = (180.0 - threshold) <= total_angle_norm <= (180.0 + threshold)
-    
-        st.markdown(r"#### Ângulos partindo dos Polos ($\theta_i$):")  # todo: name poles and zeroes, use absolute angles
+
+        st.markdown(r"#### Ângulos partindo dos Polos ($\theta_j$):")  # todo: name poles and zeroes, use absolute angles
+        st.latex(r'\theta_j=\angle(p_k - p_j)')
         for i, p in enumerate(all_poles):
-            st.markdown(rf"Polo $p_{{{i+1}}} = {p.real:.2f}{p.imag:+.2f}j$: $\theta_{{{i+1}}} = {theta_poles[i]:.2f}°$")
+            st.markdown(rf"Polo $p_{{{i+1}}} = {p.real:.2f}{p.imag:+.2f}j$: $\theta_{{{i+1}}} = {theta_poles[i]%360:.2f}°$")
         st.markdown(rf"**Somatório:** ${sum_theta:.2f}°$")
-    
+
         if all_zeros:
             st.markdown(r"#### Ângulos partindo dos Zeros ($\phi_j$):")
+            st.latex(r'\phi_j=\angle(p_k - p_j)')
             for j, z in enumerate(all_zeros):
-                st.markdown(rf"Zero $z_{{{j+1}}} = {z.real:.2f}{z.imag:+.2f}j$: $\phi_{{{j+1}}} = {phi_zeros[j]:.2f}°$")
+                st.markdown(rf"Zero $z_{{{j+1}}} = {z.real:.2f}{z.imag:+.2f}j$: $\phi_{{{j+1}}} = {phi_zeros[j]%360:.2f}°$")
             st.markdown(rf"**Somatório:** ${sum_phi:.2f}°$")
         else:
             st.markdown(r"*Não há zeros, logo $\sum \phi_j = 0°$*")
-    
+
         st.markdown("#### Avaliação Final:")
-        st.markdown(rf"Ângulo Resultante = ${sum_theta:.2f}° - {sum_phi:.2f}° = {total_angle:.2f}°$")
-    
+        st.markdown(rf"Ângulo Resultante = ${sum_theta%360:.2f}° - {sum_phi%360:.2f}° = {total_angle%360:.2f}°$")
+
         if total_angle < 0 or total_angle >= 360:
             st.markdown(rf"Normalizado (módulo 360°): ${total_angle_norm:.2f}°$")
-    
+
         if is_on_lgr:
             st.success(rf"O ponto **PERTENCE** ao LGR! ({total_angle_norm:.2f}° está dentro de 180° ± {threshold}°)")
         else:
             st.error(rf"O ponto **NÃO PERTENCE** ao LGR! ({total_angle_norm:.2f}° fora de 180° ± {threshold}°)")
-    
+
         # Plot do critério de ângulo
         fig11, ax11 = plt.subplots(figsize=(12, 6))
         plot_poles_zeros_with_multiplicity(ax11, all_poles, all_zeros)
-    
+
         draw_real_axis_segments(ax11, rl_segments, alpha=0.5)
-    
+
         point_color = 'limegreen' if is_on_lgr else 'red'
         point_marker = '*' if is_on_lgr else 'X'
         point_label = f's_i = {s_test.real}{s_test.imag:+}j ({"Pertence" if is_on_lgr else "Não pertence"})'
         ax11.plot(s_test.real, s_test.imag, point_marker, markersize=18, color=point_color,
                   markeredgecolor='black', label=point_label)
-    
+
         for p in all_poles:
             ax11.plot([p.real, s_test.real], [p.imag, s_test.imag], ':', color='red', alpha=0.3)
         for z in all_zeros:
             ax11.plot([z.real, s_test.real], [z.imag, s_test.imag], ':', color='green', alpha=0.3)
-    
+
         ax11.axhline(0, color='black', linewidth=1.2)
         ax11.axvline(0, color='black', linewidth=1.2)
-    
+
         all_x = [p.real for p in all_poles] + [z.real for z in all_zeros] + [s_test.real]
         if all_x:
             x_min, x_max = min(all_x), max(all_x)
@@ -645,7 +658,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
             y_coords = [abs(p.imag) for p in all_poles] + [abs(z.imag) for z in all_zeros] + [abs(s_test.imag)]
             y_limit = max(y_coords) + 2 if y_coords else 4
             ax11.set_ylim(-y_limit, y_limit)
-    
+
         ax11.set_aspect('auto')
         ax11.set_title('Critério de Ângulo: Verificação de Ponto', fontsize=14)
         ax11.set_xlabel(r'Eixo Real ($\sigma$)', fontsize=12)
