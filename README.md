@@ -9,19 +9,15 @@
 
 ---
 
-## 📖 Sobre o Projeto
+## Sobre o Projeto
 
-Este projeto é uma aplicação web desenvolvida em **Streamlit** com o objetivo de destrinchar o algoritmo clássico de Controle para o desenho do **Lugar Geométrico das Raízes (LGR)** ou *Root Locus*. A ferramenta foi construída com propósito pedagógico, visando ajudar estudantes e engenheiros a visualizarem, passo a passo, como a resposta de um sistema de controle de malha fechada evolui no plano complexo s.
+Este projeto é uma aplicação web desenvolvida em **Streamlit** com o objetivo de destrinchar o algoritmo clássico de Controle para o desenho do **Lugar Geométrico das Raízes (LGR)** ou *Root Locus*. A ferramenta foi construída com propósito pedagógico, visando ajudar estudantes e engenheiros a visualizarem, passo a passo, como a resposta de um sistema de controle de malha fechada evolui no plano complexo $s$.
 
-🔗 **Acesse a aplicação online:** [gabriel-lgr.streamlit.app](https://gabriel-lgr.streamlit.app/)
+**Acesse a aplicação online:** [gabriel-lgr.streamlit.app](https://gabriel-lgr.streamlit.app/)
 
 ---
 
-## 🖼️ Demonstração da tela
-
-
-
-
+## Demonstração da interface
   <!-- Imagem 1 -->
   <img src="imgs/demo-01.png" alt="Imagem da tela inicial">
 
@@ -29,7 +25,6 @@ Este projeto é uma aplicação web desenvolvida em **Streamlit** com o objetivo
   <img src="imgs/demo-02.png" alt="Imagem da tela depois de clicar no botão de calcular, aparece a equação de malha fechada e o início do gráfico" >
 </p>
 
-  
   <!-- Imagem 4 -->
   <img src="imgs/demo-04.png" alt="Imagem da tela mostrando o gráfico do LGR">
 
@@ -38,7 +33,7 @@ Este projeto é uma aplicação web desenvolvida em **Streamlit** com o objetivo
 
 ---
 
-## ✨ Funcionalidades: O Algoritmo dos 12 Passos
+## Funcionamento: O Algoritmo dos 12 Passos
 
 A aplicação divide a resolução do LGR de forma extremamente didática, seguindo os 12 passos fundamentais:
 
@@ -57,7 +52,7 @@ A aplicação divide a resolução do LGR de forma extremamente didática, segui
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 - **[Streamlit](https://streamlit.io/):** Responsável por toda a interface web, widgets interativos e exibição dos passos.
 - **[Python](https://www.python.org/):** Linguagem base de estruturação e manipulação de fluxo.
@@ -66,7 +61,7 @@ A aplicação divide a resolução do LGR de forma extremamente didática, segui
 
 ---
 
-## 🚀 Como executar localmente
+## Execução local
 
 Caso deseje rodar o ambiente didático em sua própria máquina, siga os passos:
 
