@@ -22,7 +22,7 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("📈 Calculadora do Lugar das Raízes (Root Locus)")
+st.title("Calculadora do Lugar das Raízes (Root Locus)")
 st.markdown("""
 Ferramenta didática para cálculo e visualização do **Lugar Geométrico das Raízes (LGR)**,
 mostrando todos os passos do algoritmo dos 12 passos.
@@ -32,10 +32,11 @@ mostrando todos os passos do algoritmo dos 12 passos.
 # ============================================================
 # Sidebar - Input
 # ============================================================
-st.sidebar.header("⚙️ Parâmetros do Sistema")
+st.sidebar.header("Parâmetros do Sistema")
 
-use_expr = st.sidebar.toggle("📝 Entrada por Expressões (ex: s+1)", value=False)
+use_expr = st.sidebar.toggle("Entrada por Expressões (ex: s+1)", value=False)
 
+# todo: melhorar método de entrada
 if use_expr:
     st.sidebar.markdown("*Aceita notação matemática como `(s+1)(s+2)` ou `s^2 + 2*s`*")
     st.sidebar.subheader("G(s) - Numerador")
@@ -79,7 +80,7 @@ s_test_imag = st.sidebar.number_input("Parte imaginária do ponto de teste:", va
 threshold = st.sidebar.number_input("Tolerância (graus):", min_value=0.1, value=10.0, step=1.0)
 
 st.sidebar.markdown("---")
-calcular = st.sidebar.button("🚀 Calcular", use_container_width=True)
+calcular = st.sidebar.button("Calcular", use_container_width=True)
 
 # On button click, save parameters to session state
 if calcular:
@@ -95,7 +96,7 @@ if calcular:
 
 # If never calculated, show prompt
 if 'params' not in st.session_state:
-    st.info("👈 Configure os parâmetros na barra lateral e clique em **🚀 Calcular**.")
+    st.info("Configure os parâmetros na barra lateral e clique em **Calcular**.")
     st.stop()
 
 # Use saved parameters
@@ -188,7 +189,7 @@ rl_segments = compute_real_axis_segments(all_poles, all_zeros)
 # ============================================================
 
 # --- Mostrar G(s) e H(s) ---
-st.header("📊 Funções de Transferência")
+st.header("Funções de Transferência")
 col_gs, col_hs = st.columns(2)
 with col_gs:
     G_display = sp.Rational(1) * G_num_s / G_den_s
@@ -200,7 +201,7 @@ with col_hs:
 st.markdown("---")
 
 # --- LGR Numérico ---
-st.header("🔢 LGR Numérico")
+st.header("LGR Numérico")
 st.markdown("Determinação do LGR numericamente para comparação.")
 
 K_vals, all_roots = compute_numerical_root_locus(num_combined, den_combined, k_max, int(k_points))

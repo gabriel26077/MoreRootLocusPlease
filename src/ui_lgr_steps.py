@@ -8,7 +8,7 @@ from src.control_math import calculate_break_points, calculate_departure_arrival
 
 def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_zeros, rl_segments, Np, Nz, Ls, Na, P_num_sym, P_den_sym, all_roots, s_test_real, s_test_imag, threshold):
     # ============================================================
-    st.header("📝 Algoritmo dos 12 Passos")
+    st.header("Algoritmo dos 12 Passos")
     
     # --- Passo 1 ---
     with st.expander("**Passo 1:** Polinômio Característico", expanded=True):
