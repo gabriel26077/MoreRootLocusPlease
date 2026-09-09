@@ -165,7 +165,7 @@ P_num_factored = fatorar_numerico(P_num_simp, s)
 P_den_factored = fatorar_numerico(P_den_simp, s)
 GH_final_display = P_num_factored / P_den_factored
 
-# Zeros and Poles
+# Zeros and Poles  # todo: use consistent numbering
 if P_num_simp.is_number:
     all_zeros = []
 else:
@@ -238,10 +238,10 @@ ax_num.scatter(s_test_real, s_test_imag, s=100, c='red', marker='*', label='Pont
 
 ax_num.axhline(0, color='black', linewidth=1)
 ax_num.axvline(0, color='black', linewidth=1)
-ax_num.set_title('Lugar das Raízes (Root Locus)')
-ax_num.set_xlabel('Parte Real')
-ax_num.set_ylabel('Parte Imaginária')
-ax_num.set_ylim(y_min_input, y_max_input)  # todo: aut-limit y-axis...
+ax_num.set_title('Lugar das Raízes (Root Locus)', fontsize=14)
+ax_num.set_xlabel(r'Eixo Real ($\sigma$)', fontsize=12)
+ax_num.set_ylabel(r'Eixo Imaginário ($j\omega$)', fontsize=12)
+ax_num.set_ylim(y_min_input, y_max_input)  # todo: auto-limit y-axis...
 
 # Auto-limit x-axis based on poles/zeros to prevent infinite stretching
 all_pz_real = list(np.real(polos_ma))

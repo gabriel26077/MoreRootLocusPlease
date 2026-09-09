@@ -11,17 +11,17 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
     st.header("Algoritmo dos 12 Passos")
 
     # --- Passo 1 ---
-    with st.expander("**Passo 1:** Polinômio Característico", expanded=True):
-        st.markdown("Escrever o polinômio característico de modo que K apareça claramente:")
+    with st.expander("**Passo 1:** Escrever Polinômio Característico $P(s)$", expanded=True):
+        st.markdown("Escrever o polinômio característico de modo que $K$ apareça claramente:")
         latex_final = rf"1 + G(s)H(s) = 1 + k{sp.latex(GH_expr_expanded_den)} = 1 + kP(s)"
         st.latex(latex_final)
     
     # --- Passo 2 ---
-    with st.expander("**Passo 2:** Fatorar P(s) em polos e zeros"):
+    with st.expander("**Passo 2:** Fatorar $P(s)$ em polos e zeros"):
         st.latex(rf"P(s) = {sp.latex(GH_final_display)}")
     
     # --- Passo 3 ---
-    with st.expander("**Passo 3:** Polos e Zeros"):
+    with st.expander("**Passo 3:** Marcar polos e zeros no plano complexo"):
         col1, col2 = st.columns(2)
         pole_mult = get_multiplicity_info(all_poles)
         zero_mult = get_multiplicity_info(all_zeros)
@@ -40,7 +40,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                 st.markdown("*Não há zeros finitos.*")
     
     # --- Passo 4 ---
-    with st.expander("**Passo 4:** Segmentos do eixo real que pertencem ao LGR"):
+    with st.expander("**Passo 4:** Marcar segmentos do eixo real que pertencem ao LGR"):
         fig4, ax4 = plt.subplots(figsize=(15, 6))
         plot_poles_zeros_with_multiplicity(ax4, all_poles, all_zeros)
     
@@ -84,7 +84,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
             st.markdown("*Nenhum segmento do eixo real pertence ao LGR.*")
     
     # --- Passo 5 ---
-    with st.expander("**Passo 5:** Número de lugares separados"):
+    with st.expander("**Passo 5:** Determinar o número de lugares separados"):
         st.markdown(rf"O número de polos $N_p$ é: **{Np}**")
         st.markdown(rf"O número de zeros $N_z$ é: **{Nz}**")
         st.markdown(rf"O número de lugares separados $L_s = \max\{{N_p, N_z\}}$ é: **{Ls}**")
@@ -95,7 +95,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         st.markdown("Isso se deve ao fato de que raízes complexas sempre ocorrem em pares conjugados.")
     
     # --- Passo 7 ---
-    with st.expander("**Passo 7:** Assíntotas e ângulos"):
+    with st.expander(r"**Passo 7:** Determinar centro $\sigma_A$ e ângulos $\phi_A$ das assíntotas"):
         if Na > 0:
             sum_poles = sum(np.real(all_poles))
             sum_zeros = sum(np.real(all_zeros)) if Nz > 0 else 0
@@ -104,11 +104,12 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
             angles_deg = [((2 * q + 1) * 180) / Na for q in range(Na)]
             angles_rad = np.deg2rad(angles_deg)
     
-            st.markdown("### Centro das assíntotas e ângulos")
-            st.latex(rf"\sigma_A = \frac{{\sum (-p_j) - \sum (-z_i)}}{{n_p - n_z}}")
+            st.markdown(r"### Centro das assíntotas, $\sigma_A$:")
+            st.latex(r"\sigma_A = \frac{\sum (-p_j) - \sum (-z_i)}{n_p - n_z}")
             st.latex(rf"\sigma_A = \frac{{({sum_poles:.2f}) - ({sum_zeros:.2f})}}{{{Na}}} = {sigma_A:.2f}")
-    
-            st.latex(rf"\phi_A = \frac{{(2q + 1)}}{{n_p - n_z}} \cdot 180^\circ")
+
+            st.markdown(r"### Ângulos das assíntotas, $\phi_A$:")
+            st.latex(r"\phi_A = \frac{(2q + 1)}{n_p - n_z} \cdot 180^\circ; \forall q\in\{0,...,n_p-n_z-1\}")
             for q, ang in enumerate(angles_deg):
                 st.markdown(rf"Para $q = {q}$: $\phi_A = {ang:.1f}°$")
     
@@ -156,14 +157,14 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
     
     # --- Passo 8: Pontos de Saída/Entrada (Descolamento) ---
     with st.expander("**Passo 8:** Pontos de Saída/Entrada no Eixo Real"):
-        st.markdown("### Pontos de descolamento (Breakaway/Break-in)")
-    
+        st.markdown('Este passo parte do princípio de que os os pontos em que o LGR sai do eixo real são pontos em que')
+        st.latex(r'1 + KP(S) = 0 \implies K = -\frac{1}{P(s)} \equiv p(s)')
+
         # Utilize the imported function for math logic
         K_expr_break, break_eq, break_roots_complex, valid_break_points = calculate_break_points(P_num_sym, P_den_sym, s, rl_segments)
     
-        st.markdown(r"**1º Fazer $K = p(s)$:**")
-        st.markdown(r"A partir da equação característica, isolamos $K$:")
-        st.latex(rf"K = p(s) = -\frac{{D(s)}}{{N(s)}} = {sp.latex(K_expr_break)}")
+        st.markdown(r"**1º Encontrar $p(s)$:**")
+        st.latex(rf"p(s) = -\frac{{1}}{{P(s)}} = -\frac{{D(s)}}{{N(s)}} = {sp.latex(K_expr_break)}")
     
         st.markdown(r"**2º Determinar as raízes de $\frac{dp(s)}{ds} = 0$:**")
         dK_ds_simplified = sp.cancel(sp.diff(K_expr_break, s))
@@ -235,8 +236,8 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         n_routh = CE_poly.degree()
     
         st.markdown("### Cruzamento com o Eixo Imaginário")
-        st.markdown(r"**Equação Característica $1 + k \frac{N(s)}{D(s)} = 0 \implies D(s) + kN(s) = 0$:**")
-        st.latex(rf"{sp.latex(CE_expr)} = 0")
+        st.markdown(r"Equação Característica $1 + k \frac{N(s)}{D(s)} = 0 \implies D(s) + kN(s) = 0$:")
+        st.latex(rf"{sp.latex(CE_expr)} = 0")  # todo: gather polinomial coefficients
     
         # Build Routh table
         routh_table = []
@@ -262,7 +263,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
             routh_table.append(new_row)
     
         # Display Routh table as markdown
-        table_md = "| Linha | " + " | ".join([f"Coluna {i+1}" for i in range(max_len)]) + " |\n"
+        table_md = "| Colunas | " + " | ".join([f"{i+1}" for i in range(max_len)]) + " |\n"
         table_md += "|" + "---|" * (max_len + 1) + "\n"
         for i, row in enumerate(routh_table):
             power = n_routh - i
@@ -270,12 +271,12 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
             row_str += " | ".join([f"${sp.latex(sp.cancel(elem))}$" if str(elem) != "0" else "$0$" for elem in row]) + " |\n"
             table_md += row_str
     
-        st.markdown("#### Tabela de Routh-Hurwitz:")
+        st.markdown("### Tabela de Routh-Hurwitz:")
         st.markdown(table_md)
     
         # Find stability margin
         s1_elem = routh_table[n_routh-1][0]
-        st.markdown(r"**Para encontrar a margem de estabilidade, forçamos o primeiro termo da linha $s^1$ a ser zero:**")
+        st.markdown(r"Para encontrar a margem de estabilidade, forçamos o primeiro termo da linha $s^1$ a ser zero:")
         st.latex(rf"{sp.latex(sp.cancel(s1_elem))} = 0")
     
         k_crits = []
@@ -293,7 +294,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
             A = aux_row[0].subs(k, kc)
             B = aux_row[1].subs(k, kc)
             aux_eq = sp.simplify(A * s**2 + B)
-            st.markdown(rf"**Para o ganho crítico $k = {kc:.4f}$, a equação auxiliar (da linha $s^2$) é:**")
+            st.markdown(rf"Para o ganho crítico $k = {kc:.4f}$, a equação auxiliar (da linha $s^2$) é:")
             st.latex(rf"{sp.latex(aux_eq)} = 0")
             roots_aux = sp.solve(aux_eq, s)
             for r in roots_aux:
@@ -313,7 +314,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         # Plot: imaginary axis crossings
         fig9, ax9 = plt.subplots(figsize=(15, 8))
         plot_base_lgr(ax9, all_poles, all_zeros, rl_segments, all_roots)
-        if Na > 0:
+        if Na > 0:  # todo: add as a function
             line_length = 30
             for i, angle in enumerate(angles_rad):
                 dx = line_length * np.cos(angle)
@@ -335,14 +336,14 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
     
     # --- Passo 10: Ângulos de Partida e Chegada ---
     with st.expander("**Passo 10:** Ângulos de Partida e Chegada"):
-        st.markdown("### Ângulos de Partida (dos polos complexos) e Chegada (nos zeros complexos)")
+        st.markdown("### *Ângulos de Partida* (dos polos complexos) e *Ângulos de Chegada* (nos zeros complexos)")
         st.markdown(r"""
-    O ângulo de partida indica a **direção** em que o lugar das raízes "sai" de um polo complexo 
-    quando $K$ começa a crescer a partir de zero. Analogamente, o ângulo de chegada indica a direção 
+    O *ângulo de partida* indica a **direção** em que o lugar das raízes "sai" de um polo complexo 
+    quando $K$ começa a crescer a partir de zero. Analogamente, o *ângulo de chegada* indica a direção 
     em que o LGR "entra" em um zero complexo quando $K \to \infty$.
     """)
     
-        tol_10 = 1e-5
+        tol_10 = 1e-5  # tolerance for im component == 0
         complex_poles_10 = [p for p in all_poles if abs(p.imag) > tol_10]
         complex_zeros_10 = [z for z in all_zeros if abs(z.imag) > tol_10]
     
@@ -372,7 +373,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
     e $\phi_j = \angle(p_k - z_j)$ é o ângulo do vetor **do zero $z_j$ até $p_k$**.
     """)
     
-                for pk in complex_poles_10:
+                for pk in complex_poles_10:  # todo: ignore conjugates
                     angle_dep, angles_from_other_poles, angles_from_zeros = departure_angles_full[pk]
                     other_poles = [p for p in all_poles if not np.isclose(pk, p)]
     
@@ -382,7 +383,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                     st.markdown("**Ângulos dos vetores dos outros polos até $p_k$:**")
                     for i, (p, ang) in enumerate(zip(other_poles, angles_from_other_poles)):
                         vec = pk - p
-                        st.latex(
+                        st.latex(  # todo: change display format (results in new line)
                             rf"\theta_{{{i+1}}} = \angle(p_k - p_{{{i+1}}}) = "
                             rf"\angle\big(({pk.real:.4f}{pk.imag:+.4f}j) - ({p.real:.4f}{p.imag:+.4f}j)\big) = "
                             rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
@@ -393,7 +394,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                         st.markdown("**Ângulos dos vetores dos zeros até $p_k$:**")
                         for j, (z, ang) in enumerate(zip(all_zeros, angles_from_zeros)):
                             vec = pk - z
-                            st.latex(
+                            st.latex(  # todo: change display format (results in new line)
                                 rf"\phi_{{{j+1}}} = \angle(p_k - z_{{{j+1}}}) = "
                                 rf"\angle\big(({pk.real:.4f}{pk.imag:+.4f}j) - ({z.real:.4f}{z.imag:+.4f}j)\big) = "
                                 rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
@@ -417,7 +418,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                         rf"\theta_d = 180° - ({sum_theta:.2f}°) + ({sum_phi:.2f}°) = "
                         rf"180° {-sum_theta:+.2f}° {sum_phi:+.2f}°"
                     )
-                    st.success(rf"$\theta_d = {angle_dep:.2f}°$")
+                    st.success(rf"$\theta_d = {angle_dep:.2f}°$")  # todo: format [0,360]
                     st.markdown("---")
             else:
                 st.info("Não há polos complexos — ângulos de partida não são aplicáveis.")
@@ -486,7 +487,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                     st.success(rf"$\theta_a = {angle_arr:.2f}°$")
                     st.markdown("---")
 
-                    # --- Plot ---
+                    # --- Plot ---  # fixme: needs to plot if there is only complex zeroes or complex poles
                     fig10, ax10 = plt.subplots(figsize=(15, 8))
                     plot_base_lgr(ax10, all_poles, all_zeros, rl_segments, all_roots)
                     if Na > 0:
@@ -515,7 +516,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                     extra_x.extend(valid_break_points)
 
                     # Draw departure arrows (red, outward from pole)
-                    for pk, angle_deg in departure_angles.items():
+                    for pk, angle_deg in departure_angles.items():  # fixme: UnboundLocalError
                         angle_rad_d = np.radians(angle_deg)
                         dx = arrow_len * np.cos(angle_rad_d)
                         dy = arrow_len * np.sin(angle_rad_d)
@@ -534,7 +535,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                         extra_y.append(pk.imag + (arrow_len + text_offset + 1) * np.sin(angle_rad_d))
 
                     # Draw arrival arrows (green, outward from zero)
-                    for zk, angle_deg in arrival_angles.items():
+                    for zk, angle_deg in arrival_angles.items():  # fixme: UnboundLocalError
                         angle_rad_a = np.radians(angle_deg)
                         dx = arrow_len * np.cos(angle_rad_a)
                         dy = arrow_len * np.sin(angle_rad_a)
@@ -577,9 +578,13 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
 
     # --- Passo 11: Critério de Ângulo ---
     with st.expander("**Passo 11:** Critério de Ângulo"):
+        st.markdown('Determinar a localização das raízes que satisfazem o critério do ângulo de fase:')
+        st.latex(r'\angle \left. P(s) \right|_{s=s_i} = \left.\left( \sum_{n_p} \theta_j - \sum_{n_p} \phi_j \right) \right|_{s=s_i} = 180^\circ \pm q 360^\circ')
+        st.markdown('onde $q \in \{0,...,n_p-n_z-1\}$.')
+
         s_test = complex(s_test_real, s_test_imag)
     
-        st.markdown(f"**Ponto de teste:** $s = {s_test.real} {s_test.imag:+}j$")
+        st.markdown(f"**Ponto de teste:** $s_i = {s_test.real} {s_test.imag:+}j$")
     
         theta_poles = [np.degrees(np.angle(s_test - p)) for p in all_poles]
         phi_zeros = [np.degrees(np.angle(s_test - z)) for z in all_zeros]
@@ -590,7 +595,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         total_angle_norm = total_angle % 360.0
         is_on_lgr = (180.0 - threshold) <= total_angle_norm <= (180.0 + threshold)
     
-        st.markdown(r"#### Ângulos partindo dos Polos ($\theta_i$):")
+        st.markdown(r"#### Ângulos partindo dos Polos ($\theta_i$):")  # todo: name poles and zeroes, use absolute angles
         for i, p in enumerate(all_poles):
             st.markdown(rf"Polo $p_{{{i+1}}} = {p.real:.2f}{p.imag:+.2f}j$: $\theta_{{{i+1}}} = {theta_poles[i]:.2f}°$")
         st.markdown(rf"**Somatório:** ${sum_theta:.2f}°$")
@@ -610,9 +615,9 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
             st.markdown(rf"Normalizado (módulo 360°): ${total_angle_norm:.2f}°$")
     
         if is_on_lgr:
-            st.success(rf"✅ O ponto **PERTENCE** ao LGR! ({total_angle_norm:.2f}° está dentro de 180° ± {threshold}°)")
+            st.success(rf"O ponto **PERTENCE** ao LGR! ({total_angle_norm:.2f}° está dentro de 180° ± {threshold}°)")
         else:
-            st.error(rf"❌ O ponto **NÃO PERTENCE** ao LGR! ({total_angle_norm:.2f}° fora de 180° ± {threshold}°)")
+            st.error(rf"O ponto **NÃO PERTENCE** ao LGR! ({total_angle_norm:.2f}° fora de 180° ± {threshold}°)")
     
         # Plot do critério de ângulo
         fig11, ax11 = plt.subplots(figsize=(12, 6))
@@ -622,7 +627,7 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
     
         point_color = 'limegreen' if is_on_lgr else 'red'
         point_marker = '*' if is_on_lgr else 'X'
-        point_label = f's = {s_test.real}{s_test.imag:+}j ({"Pertence" if is_on_lgr else "Não pertence"})'
+        point_label = f's_i = {s_test.real}{s_test.imag:+}j ({"Pertence" if is_on_lgr else "Não pertence"})'
         ax11.plot(s_test.real, s_test.imag, point_marker, markersize=18, color=point_color,
                   markeredgecolor='black', label=point_label)
     
@@ -649,13 +654,13 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         ax11.grid(True, linestyle=':', alpha=0.6)
         ax11.legend(loc='upper right')
         plt.tight_layout()
-        st.pyplot(fig11)
+        st.pyplot(fig11)  # todo: add full LGR to plot
     
     # --- Passo 12: Critério de Módulo (Cálculo de K) ---
     with st.expander("**Passo 12:** Critério de Módulo (Cálculo de K)"):
         st.markdown("### Critério de Módulo")
-        st.markdown(r"Se um ponto $s_0$ pertence ao LGR, o valor de $K$ correspondente é dado por:")
-        st.latex(r"K = \frac{1}{|P(s_0)|} = \frac{\prod |s_0 - p_i|}{\prod |s_0 - z_j|}")
+        st.markdown(r"Se um ponto $s_i$ pertence ao LGR, o valor de $K$ correspondente é dado por:")
+        st.latex(r"K = \left.\frac{1}{|P(s)|}\right|_{s=s_i} = \frac{\prod |s_0 - p_j|}{\prod |s_0 - z_j|}")
     
         s_test_k = complex(s_test_real, s_test_imag)
     
@@ -696,10 +701,8 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
             st.latex(rf"K = \frac{{{prod_poles:.4f}}}{{{prod_zeros:.4f}}} = {K_value:.4f}")
     
             if on_lgr_k:
-                st.success(rf"✅ O ponto pertence ao LGR. O valor de $K$ correspondente é: **K = {K_value:.4f}**")
+                st.success(rf"O ponto pertence ao LGR. O valor de $K$ correspondente é: **K = {K_value:.4f}**")
             else:
-                st.warning(rf"⚠️ O ponto **não pertence** ao LGR (falha no critério de ângulo). O valor calculado de K = {K_value:.4f} é apenas uma referência.")
+                st.warning(rf"O ponto **não pertence** ao LGR (falha no critério de ângulo). O valor calculado de K = {K_value:.4f} é apenas uma referência.")
         else:
-            st.error("❌ Não é possível calcular K: o ponto coincide com um zero.")
-    
-    # ============================================================
+            st.error("Não é possível calcular K: o ponto coincide com um zero.")
