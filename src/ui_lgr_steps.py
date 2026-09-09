@@ -334,257 +334,9 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
         st.pyplot(fig9)
     
     # --- Passo 10: Ângulos de Partida e Chegada ---
-    with st.expander("**Passo 10:** Ângulos de Partida e Chegada"):  # todo: use tabs
-        st.markdown("### *Ângulos de Partida* (dos polos complexos) e *Ângulos de Chegada* (nos zeros complexos)")
-        st.markdown(r"""
-    O *ângulo de partida* indica a **direção** em que o lugar das raízes "sai" de um polo complexo 
-    quando $K$ começa a crescer a partir de zero. Analogamente, o *ângulo de chegada* indica a direção 
-    em que o LGR "entra" em um zero complexo quando $K \to \infty$.
-    """)
-    
-        tol_10 = 1e-5  # tolerance for im component == 0
-        complex_poles_10 = [p for p in all_poles if abs(p.imag) > tol_10]
-        complex_zeros_10 = [z for z in all_zeros if abs(z.imag) > tol_10]
-    
-        departure_angles_full, arrival_angles_full = calculate_departure_arrival_angles(all_poles, all_zeros, tol_10)
-    
-        if not complex_poles_10 and not complex_zeros_10:
-            st.info("**Não há polos ou zeros complexos neste sistema.** O Passo 10 não se aplica.")
-        else:
-            # We need simpler dicts for plotting
-            departure_angles = {k: v[0] for k, v in departure_angles_full.items()}
-            arrival_angles = {k: v[0] for k, v in arrival_angles_full.items()}
-    
-            # ===================== DEPARTURE ANGLES =====================
-            if complex_poles_10:
-                st.markdown("---")
-                st.markdown("### Ângulos de Partida ($\\theta_d$) — Saída dos polos complexos")
-                st.markdown(r"""
-    **Condição de ângulo** aplicada a um ponto $s$ infinitesimalmente próximo do polo $p_k$:
-    
-    $$\sum_{j} \angle(p_k - z_j) - \sum_{\substack{i \\ i \neq k}} \angle(p_k - p_i) - \theta_d = (2q+1) \cdot 180°$$
-    
-    Isolando $\theta_d$ (para $q = 0$):
-    
-    $$\boxed{\theta_d = 180° - \sum_{\substack{i \\ i \neq k}} \theta_i + \sum_{j} \phi_j}$$
-    
-    onde $\theta_i = \angle(p_k - p_i)$ é o ângulo do vetor **do polo $p_i$ até $p_k$**, 
-    e $\phi_j = \angle(p_k - z_j)$ é o ângulo do vetor **do zero $z_j$ até $p_k$**.
-    """)
-    
-                for pk in complex_poles_10:  # todo: ignore conjugates
-                    angle_dep, angles_from_other_poles, angles_from_zeros = departure_angles_full[pk]
-                    other_poles = [p for p in all_poles if not np.isclose(pk, p)]
-    
-                    st.markdown(f"#### Polo $p_k = {pk.real:.4f}{pk.imag:+.4f}j$")
-    
-                    # Show each vector and angle from other poles
-                    st.markdown("Ângulos dos vetores dos outros polos até $p_k$:")
-                    for i, (p, ang) in enumerate(zip(other_poles, angles_from_other_poles)):
-                        vec = pk - p
-                        st.latex(
-                            rf"\theta_{{{i+1}}} = \angle(p_k - p_{{{i+1}}}) = "
-                            rf"\angle\big(({pk.real:.4f}{pk.imag:+.4f}j) - ({p.real:.4f}{p.imag:+.4f}j)\big) = "
-                            rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
-                        )
-                        st.latex(rf'\boxed{{\theta_{{{i+1}}} = {ang%360:.2f}°}}')
-    
-                    # Show each vector and angle from zeros
-                    if all_zeros:
-                        st.markdown("Ângulos dos vetores dos zeros até $p_k$:")
-                        for j, (z, ang) in enumerate(zip(all_zeros, angles_from_zeros)):
-                            vec = pk - z
-                            st.latex(
-                                rf"\phi_{{{j+1}}} = \angle(p_k - z_{{{j+1}}}) = "
-                                rf"\angle\big(({pk.real:.4f}{pk.imag:+.4f}j) - ({z.real:.4f}{z.imag:+.4f}j)\big) = "
-                                rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
-                            )
-                            st.latex(rf'\boxed{{\phi_{{{i + 1}}} = {ang%360:.2f}°}}')
-                    else:
-                        st.markdown(r"Não há zeros finitos, logo $\sum \phi_j = 0°$")
-    
-                    # Show summations with explicit terms
-                    sum_theta = sum(angles_from_other_poles)
-                    sum_phi = sum(angles_from_zeros)
-
-                    st.markdown('Somatórios:')
-                    theta_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_other_poles])
-                    st.latex(rf"\sum \theta_i = {theta_terms} = {sum_theta:.2f}°")
-                    st.latex(rf"\boxed{{\sum \theta_i = {sum_theta%360:.2f}°}}")
-
-                    if angles_from_zeros:
-                        phi_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_zeros])
-                        st.latex(rf"\sum \phi_j = {phi_terms} = {sum_phi:.2f}°")
-                        st.latex(rf"\boxed{{\sum \phi_j = {sum_phi%360:.2f}°}}")
-
-                    # Final substitution
-                    st.latex(
-                        rf"\theta_d = 180° - ({sum_theta:.2f}°) + ({sum_phi:.2f}°) = "
-                        rf"180° {-sum_theta:+.2f}° {sum_phi:+.2f}°"
-                    )
-                    st.success(rf"$\theta_d = {angle_dep:.2f}° = {angle_dep%360:.2f}°$")
-                    st.markdown("---")
-            else:
-                st.info("*Não há polos complexos — ângulos de partida não são aplicáveis.*")
-    
-            # ===================== ARRIVAL ANGLES =====================
-            if complex_zeros_10:
-                st.markdown("### Ângulos de Chegada ($\\theta_a$) — Entrada nos zeros complexos")
-                st.markdown(r"""
-    **Condição de ângulo** aplicada a um ponto $s$ infinitesimalmente próximo do zero $z_k$:
-    
-    $$\theta_a + \sum_{\substack{j \\ j \neq k}} \angle(z_k - z_j) - \sum_{i} \angle(z_k - p_i) = (2q+1) \cdot 180°$$
-    
-    Isolando $\theta_a$ (para $q = 0$):
-    
-    $$\boxed{\theta_a = 180° - \sum_{\substack{j \\ j \neq k}} \phi_j + \sum_{i} \theta_i}$$
-    
-    onde $\theta_i = \angle(z_k - p_i)$ é o ângulo do vetor **do polo $p_i$ até $z_k$**, 
-    e $\phi_j = \angle(z_k - z_j)$ é o ângulo do vetor **do zero $z_j$ até $z_k$**.
-    """)
-    
-                for zk in complex_zeros_10:
-                    angle_arr, angles_from_other_zeros, angles_from_poles = arrival_angles_full[zk]
-                    other_zeros = [z for z in all_zeros if not np.isclose(zk, z)]
-    
-                    st.markdown(f"### Zero $z_k = {zk.real:.4f}{zk.imag:+.4f}j$")
-    
-                    # Show each vector and angle from poles
-                    st.markdown("Ângulos dos vetores dos polos até $z_k$:")
-                    for i, (p, ang) in enumerate(zip(all_poles, angles_from_poles)):
-                        vec = zk - p
-                        st.latex(
-                            rf"\theta_{{{i+1}}} = \angle(z_k - p_{{{i+1}}}) = "
-                            rf"\angle\big(({zk.real:.4f}{zk.imag:+.4f}j) - ({p.real:.4f}{p.imag:+.4f}j)\big) = "
-                            rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
-                        )
-                        st.latex(rf'\boxed{{\theta_{{{i+1}}} = {ang%360:.2f}°}}')
-
-    
-                    # Show each vector and angle from other zeros
-                    if other_zeros:
-                        st.markdown("Ângulos dos vetores dos outros zeros até $z_k$:")
-                        for j, (z, ang) in enumerate(zip(other_zeros, angles_from_other_zeros)):
-                            vec = zk - z
-                            st.latex(
-                                rf"\phi_{{{j+1}}} = \angle(z_k - z_{{{j+1}}}) = "
-                                rf"\angle\big(({zk.real:.4f}{zk.imag:+.4f}j) - ({z.real:.4f}{z.imag:+.4f}j)\big) = "
-                                rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
-                            )
-                            st.latex(rf'\boxed{{\phi_{{{i + 1}}} = {ang%360:.2f}°}}')
-                    else:
-                        st.markdown(r"*Não há outros zeros, logo $\sum \phi_j = 0°$*")
-    
-                    # Show summations with explicit terms
-                    sum_phi_z = sum(angles_from_other_zeros)
-                    sum_theta_z = sum(angles_from_poles)
-
-                    st.markdown('Somatórios:')
-                    theta_z_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_poles])
-                    st.latex(rf"\sum \theta_i = {theta_z_terms} = {sum_theta_z:.2f}°")
-                    st.latex(rf"\boxed{{\sum \theta_i = {sum_theta_z%360:.2f}°}}")
-
-                    if angles_from_other_zeros:
-                        phi_z_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_other_zeros])
-                        st.latex(rf"\sum \phi_j = {phi_z_terms} = {sum_phi_z:.2f}°")
-                        st.latex(rf"\boxed{{\sum \phi_j = {sum_phi_z%360:.2f}°}}")
-
-                    # Final substitution
-                    st.latex(
-                        rf"\theta_a = 180° - ({sum_phi_z:.2f}°) + ({sum_theta_z:.2f}°) = "
-                        rf"180° {-sum_phi_z:+.2f}° {sum_theta_z:+.2f}°"
-                    )
-                    st.success(rf"$\theta_a = {angle_arr:.2f}° = {angle_arr%360:.2f}°$")
-                    st.markdown("---")
-
-                    # --- Plot ---  # fixme: needs to plot if there is only complex zeroes or complex poles
-                    fig10, ax10 = plt.subplots(figsize=(15, 8))
-                    plot_base_lgr(ax10, all_poles, all_zeros, rl_segments, all_roots)
-                    if Na > 0:
-                        line_length = 40
-                        for i, angle in enumerate(angles_rad):
-                            dx = line_length * np.cos(angle)
-                            dy = line_length * np.sin(angle)
-                            ax10.plot([sigma_A, sigma_A + dx], [0, dy], '--', color='darkorange',
-                                      alpha=0.4, linewidth=2, label='Assíntotas' if i == 0 else "")
-                    if valid_break_points:
-                        ax10.plot(valid_break_points, [0] * len(valid_break_points), 'd', markersize=12,
-                                  color='magenta', markeredgewidth=2, label='Pontos Saída/Entrada')
-                    if valid_crossings:
-                        cross_y = [pt.imag for pt in valid_crossings]
-                        ax10.plot([0] * len(valid_crossings), cross_y, '*', markersize=18, color='cyan',
-                                  markeredgewidth=2, markeredgecolor='black', label='Cruzamento jω')
-
-                    arrow_len = 1.5
-                    text_offset = 0.8
-                    extra_x = [p.real for p in all_poles] + [z.real for z in all_zeros]
-                    extra_y = [p.imag for p in all_poles] + [z.imag for z in all_zeros]
-                    for seg in rl_segments:
-                        extra_x.extend([seg[0], seg[1]])
-                    if Na > 0:
-                        extra_x.append(sigma_A)
-                    extra_x.extend(valid_break_points)
-
-                    # Draw departure arrows (red, outward from pole)
-                    for pk, angle_deg in departure_angles.items():  # fixme: UnboundLocalError
-                        angle_rad_d = np.radians(angle_deg)
-                        dx = arrow_len * np.cos(angle_rad_d)
-                        dy = arrow_len * np.sin(angle_rad_d)
-                        ax10.annotate('', xy=(pk.real + dx, pk.imag + dy),
-                                      xytext=(pk.real, pk.imag),
-                                      arrowprops=dict(arrowstyle='->', color='darkred', lw=2, mutation_scale=15))
-                        tx = pk.real + (arrow_len + text_offset) * np.cos(angle_rad_d)
-                        ty = pk.imag + (arrow_len + text_offset) * np.sin(angle_rad_d)
-                        if abs(np.sin(angle_rad_d)) < 0.3:
-                            ty += 0.6 * np.sign(pk.imag)
-                        ax10.text(tx, ty, f'{angle_deg:.1f}°', color='darkred', fontsize=10, fontweight='bold',
-                                  ha='center', va='center',
-                                  bbox=dict(facecolor='white', edgecolor='darkred',
-                                            boxstyle='round,pad=0.2', alpha=0.9))
-                        extra_x.append(pk.real + (arrow_len + text_offset + 1) * np.cos(angle_rad_d))
-                        extra_y.append(pk.imag + (arrow_len + text_offset + 1) * np.sin(angle_rad_d))
-
-                    # Draw arrival arrows (green, outward from zero)
-                    for zk, angle_deg in arrival_angles.items():  # fixme: UnboundLocalError
-                        angle_rad_a = np.radians(angle_deg)
-                        dx = arrow_len * np.cos(angle_rad_a)
-                        dy = arrow_len * np.sin(angle_rad_a)
-                        ax10.annotate('', xy=(zk.real + dx, zk.imag + dy),
-                                      xytext=(zk.real, zk.imag),
-                                      arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2, mutation_scale=15))
-                        tx = zk.real + (arrow_len + text_offset) * np.cos(angle_rad_a)
-                        ty = zk.imag + (arrow_len + text_offset) * np.sin(angle_rad_a)
-                        ax10.text(tx, ty, f'{angle_deg:.1f}°', color='darkgreen', fontsize=10, fontweight='bold',
-                                  ha='center', va='center',
-                                  bbox=dict(facecolor='white', edgecolor='darkgreen',
-                                            boxstyle='round,pad=0.2', alpha=0.9))
-                        extra_x.append(zk.real + (arrow_len + text_offset + 1) * np.cos(angle_rad_a))
-                        extra_y.append(zk.imag + (arrow_len + text_offset + 1) * np.sin(angle_rad_a))
-
-                    # Set limits to include all arrows and text
-                    if extra_x:
-                        x_min10, x_max10 = min(extra_x), max(extra_x)
-                        x_span10 = x_max10 - x_min10
-                        pad_x10 = x_span10 * 0.25 if x_span10 > 0 else 5.0
-                        ax10.set_xlim(x_min10 - pad_x10, max(x_max10 + pad_x10, 5))
-                    if extra_y:
-                        y_abs = [abs(y) for y in extra_y]
-                        y_limit10 = max(y_abs) + 4 if y_abs else 8
-                        ax10.set_ylim(-y_limit10, y_limit10)
-
-                    ax10.set_aspect('auto')
-                    ax10.set_title('Lugar das Raízes com Vetores de Partida/Chegada', fontsize=16, pad=20)
-                    ax10.set_xlabel(r'Eixo Real ($\sigma$)', fontsize=14)
-                    ax10.set_ylabel(r'Eixo Imaginário ($j\omega$)', fontsize=14)
-                    ax10.grid(True, linestyle=':', alpha=0.7)
-                    handles, labels = ax10.get_legend_handles_labels()
-                    by_label = dict(zip(labels, handles))
-                    ax10.legend(by_label.values(), by_label.keys(), loc='upper right', fontsize=11)
-                    plt.tight_layout()
-                    st.pyplot(fig10)
-
-            else:
-                st.info("Não há zeros complexos — ângulos de chegada não são aplicáveis.")
+    with st.expander("**Passo 10:** Ângulos de Partida e Chegada"):
+        step_10(s, GH_expr_expanded_den, GH_final_display, all_poles, all_zeros, rl_segments, Np, Nz, Ls, Na, P_num_sym,
+                P_den_sym, all_roots, s_test_real, s_test_imag, threshold, valid_crossings, angles_rad, sigma_A, valid_break_points)
 
     # --- Passo 11: Critério de Ângulo ---
     with st.expander("**Passo 11:** Critério de Ângulo"):
@@ -718,3 +470,256 @@ def render_12_steps(s, GH_expr_expanded_den, GH_final_display, all_poles, all_ze
                 st.warning(rf"O ponto **não pertence** ao LGR (falha no critério de ângulo). O valor calculado de K = {K_value:.4f} é apenas uma referência.")
         else:
             st.error("Não é possível calcular K: o ponto coincide com um zero.")
+
+def step_10(s, GH_expr_expanded_den, GH_final_display, all_poles, all_zeros, rl_segments, Np, Nz, Ls, Na,
+            P_num_sym, P_den_sym, all_roots, s_test_real, s_test_imag, threshold, valid_crossings, angles_rad, sigma_A, valid_break_points):
+    st.markdown("### *Ângulos de Partida* (dos polos complexos) e *Ângulos de Chegada* (nos zeros complexos)")  # todo: use tabs
+    st.markdown(r"""
+        O *ângulo de partida* indica a **direção** em que o lugar das raízes "sai" de um polo complexo 
+        quando $K$ começa a crescer a partir de zero. Analogamente, o *ângulo de chegada* indica a direção 
+        em que o LGR "entra" em um zero complexo quando $K \to \infty$.
+        """)
+
+    tol_10 = 1e-5  # tolerance for im component == 0
+    complex_poles_10 = [p for p in all_poles if abs(p.imag) > tol_10]
+    complex_zeros_10 = [z for z in all_zeros if abs(z.imag) > tol_10]
+
+    departure_angles_full, arrival_angles_full = calculate_departure_arrival_angles(all_poles, all_zeros, tol_10)
+
+    if not complex_poles_10 and not complex_zeros_10:
+        st.info("**Não há polos ou zeros complexos neste sistema.** O Passo 10 não se aplica.")
+        return
+
+    # We need simpler dicts for plotting
+    departure_angles = {k: v[0] for k, v in departure_angles_full.items()}
+    arrival_angles = {k: v[0] for k, v in arrival_angles_full.items()}
+
+    # ===================== DEPARTURE ANGLES =====================
+    if complex_poles_10:
+        st.markdown("---")
+        st.markdown("### Ângulos de Partida ($\\theta_d$) — Saída dos polos complexos")
+        st.markdown(r"""
+    **Condição de ângulo** aplicada a um ponto $s$ infinitesimalmente próximo do polo $p_k$:
+
+    $$\sum_{j} \angle(p_k - z_j) - \sum_{\substack{i \\ i \neq k}} \angle(p_k - p_i) - \theta_d = (2q+1) \cdot 180°$$
+
+    Isolando $\theta_d$ (para $q = 0$):
+
+    $$\boxed{\theta_d = 180° - \sum_{\substack{i \\ i \neq k}} \theta_i + \sum_{j} \phi_j}$$
+
+    onde $\theta_i = \angle(p_k - p_i)$ é o ângulo do vetor **do polo $p_i$ até $p_k$**, 
+    e $\phi_j = \angle(p_k - z_j)$ é o ângulo do vetor **do zero $z_j$ até $p_k$**.
+    """)
+
+        for pk in complex_poles_10:  # todo: ignore conjugates
+            angle_dep, angles_from_other_poles, angles_from_zeros = departure_angles_full[pk]
+            other_poles = [p for p in all_poles if not np.isclose(pk, p)]
+
+            st.markdown(f"#### Polo $p_k = {pk.real:.4f}{pk.imag:+.4f}j$")
+
+            # Show each vector and angle from other poles
+            st.markdown("Ângulos dos vetores dos outros polos até $p_k$:")
+            for i, (p, ang) in enumerate(zip(other_poles, angles_from_other_poles)):
+                vec = pk - p
+                st.latex(
+                    rf"\theta_{{{i + 1}}} = \angle(p_k - p_{{{i + 1}}}) = "
+                    rf"\angle\big(({pk.real:.4f}{pk.imag:+.4f}j) - ({p.real:.4f}{p.imag:+.4f}j)\big) = "
+                    rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
+                )
+                st.latex(rf'\boxed{{\theta_{{{i + 1}}} = {ang % 360:.2f}°}}')
+
+            # Show each vector and angle from zeros
+            if all_zeros:
+                st.markdown("Ângulos dos vetores dos zeros até $p_k$:")
+                for j, (z, ang) in enumerate(zip(all_zeros, angles_from_zeros)):
+                    vec = pk - z
+                    st.latex(
+                        rf"\phi_{{{j + 1}}} = \angle(p_k - z_{{{j + 1}}}) = "
+                        rf"\angle\big(({pk.real:.4f}{pk.imag:+.4f}j) - ({z.real:.4f}{z.imag:+.4f}j)\big) = "
+                        rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
+                    )
+                    st.latex(rf'\boxed{{\phi_{{{i + 1}}} = {ang % 360:.2f}°}}')
+            else:
+                st.markdown(r"Não há zeros finitos, logo $\sum \phi_j = 0°$")
+
+            # Show summations with explicit terms
+            sum_theta = sum(angles_from_other_poles)
+            sum_phi = sum(angles_from_zeros)
+
+            st.markdown('Somatórios:')
+            theta_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_other_poles])
+            st.latex(rf"\sum \theta_i = {theta_terms} = {sum_theta:.2f}°")
+            st.latex(rf"\boxed{{\sum \theta_i = {sum_theta % 360:.2f}°}}")
+
+            if angles_from_zeros:
+                phi_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_zeros])
+                st.latex(rf"\sum \phi_j = {phi_terms} = {sum_phi:.2f}°")
+                st.latex(rf"\boxed{{\sum \phi_j = {sum_phi % 360:.2f}°}}")
+
+            # Final substitution
+            st.latex(
+                rf"\theta_d = 180° - ({sum_theta:.2f}°) + ({sum_phi:.2f}°) = "
+                rf"180° {-sum_theta:+.2f}° {sum_phi:+.2f}°"
+            )
+            st.success(rf"$\theta_d = {angle_dep:.2f}° = {angle_dep % 360:.2f}°$")
+            st.markdown("---")
+    else:
+        st.info("*Não há polos complexos — ângulos de partida não são aplicáveis.*")
+
+    # ===================== ARRIVAL ANGLES =====================
+    if complex_zeros_10:
+        st.markdown("### Ângulos de Chegada ($\\theta_a$) — Entrada nos zeros complexos")
+        st.markdown(r"""
+    **Condição de ângulo** aplicada a um ponto $s$ infinitesimalmente próximo do zero $z_k$:
+
+    $$\theta_a + \sum_{\substack{j \\ j \neq k}} \angle(z_k - z_j) - \sum_{i} \angle(z_k - p_i) = (2q+1) \cdot 180°$$
+
+    Isolando $\theta_a$ (para $q = 0$):
+
+    $$\boxed{\theta_a = 180° - \sum_{\substack{j \\ j \neq k}} \phi_j + \sum_{i} \theta_i}$$
+
+    onde $\theta_i = \angle(z_k - p_i)$ é o ângulo do vetor **do polo $p_i$ até $z_k$**, 
+    e $\phi_j = \angle(z_k - z_j)$ é o ângulo do vetor **do zero $z_j$ até $z_k$**.
+    """)
+
+        for zk in complex_zeros_10:
+            angle_arr, angles_from_other_zeros, angles_from_poles = arrival_angles_full[zk]
+            other_zeros = [z for z in all_zeros if not np.isclose(zk, z)]
+
+            st.markdown(f"### Zero $z_k = {zk.real:.4f}{zk.imag:+.4f}j$")
+
+            # Show each vector and angle from poles
+            st.markdown("Ângulos dos vetores dos polos até $z_k$:")
+            for i, (p, ang) in enumerate(zip(all_poles, angles_from_poles)):
+                vec = zk - p
+                st.latex(
+                    rf"\theta_{{{i + 1}}} = \angle(z_k - p_{{{i + 1}}}) = "
+                    rf"\angle\big(({zk.real:.4f}{zk.imag:+.4f}j) - ({p.real:.4f}{p.imag:+.4f}j)\big) = "
+                    rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
+                )
+                st.latex(rf'\boxed{{\theta_{{{i + 1}}} = {ang % 360:.2f}°}}')
+
+            # Show each vector and angle from other zeros
+            if other_zeros:
+                st.markdown("Ângulos dos vetores dos outros zeros até $z_k$:")
+                for j, (z, ang) in enumerate(zip(other_zeros, angles_from_other_zeros)):
+                    vec = zk - z
+                    st.latex(
+                        rf"\phi_{{{j + 1}}} = \angle(z_k - z_{{{j + 1}}}) = "
+                        rf"\angle\big(({zk.real:.4f}{zk.imag:+.4f}j) - ({z.real:.4f}{z.imag:+.4f}j)\big) = "
+                        rf"\angle({vec.real:.4f}{vec.imag:+.4f}j) = {ang:.2f}°"
+                    )
+                    st.latex(rf'\boxed{{\phi_{{{i + 1}}} = {ang % 360:.2f}°}}')
+            else:
+                st.markdown(r"*Não há outros zeros, logo $\sum \phi_j = 0°$*")
+
+            # Show summations with explicit terms
+            sum_phi_z = sum(angles_from_other_zeros)
+            sum_theta_z = sum(angles_from_poles)
+
+            st.markdown('Somatórios:')
+            theta_z_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_poles])
+            st.latex(rf"\sum \theta_i = {theta_z_terms} = {sum_theta_z:.2f}°")
+            st.latex(rf"\boxed{{\sum \theta_i = {sum_theta_z % 360:.2f}°}}")
+
+            if angles_from_other_zeros:
+                phi_z_terms = " + ".join([f"({a:.2f}°)" for a in angles_from_other_zeros])
+                st.latex(rf"\sum \phi_j = {phi_z_terms} = {sum_phi_z:.2f}°")
+                st.latex(rf"\boxed{{\sum \phi_j = {sum_phi_z % 360:.2f}°}}")
+
+            # Final substitution
+            st.latex(
+                rf"\theta_a = 180° - ({sum_phi_z:.2f}°) + ({sum_theta_z:.2f}°) = "
+                rf"180° {-sum_phi_z:+.2f}° {sum_theta_z:+.2f}°"
+            )
+            st.success(rf"$\theta_a = {angle_arr:.2f}° = {angle_arr % 360:.2f}°$")
+            st.markdown("---")
+
+    else:
+        st.info("Não há zeros complexos — ângulos de chegada não são aplicáveis.")
+
+    # --- Plot ---
+    fig10, ax10 = plt.subplots(figsize=(15, 8))
+    plot_base_lgr(ax10, all_poles, all_zeros, rl_segments, all_roots)
+    if Na > 0:
+        line_length = 40
+        for i, angle in enumerate(angles_rad):
+            dx = line_length * np.cos(angle)
+            dy = line_length * np.sin(angle)
+            ax10.plot([sigma_A, sigma_A + dx], [0, dy], '--', color='darkorange',
+                      alpha=0.4, linewidth=2, label='Assíntotas' if i == 0 else "")
+    if valid_break_points:
+        ax10.plot(valid_break_points, [0] * len(valid_break_points), 'd', markersize=12,
+                  color='magenta', markeredgewidth=2, label='Pontos Saída/Entrada')
+    if valid_crossings:
+        cross_y = [pt.imag for pt in valid_crossings]
+        ax10.plot([0] * len(valid_crossings), cross_y, '*', markersize=18, color='cyan',
+                  markeredgewidth=2, markeredgecolor='black', label='Cruzamento jω')
+
+    arrow_len = 1.5
+    text_offset = 0.8
+    extra_x = [p.real for p in all_poles] + [z.real for z in all_zeros]
+    extra_y = [p.imag for p in all_poles] + [z.imag for z in all_zeros]
+    for seg in rl_segments:
+        extra_x.extend([seg[0], seg[1]])
+    if Na > 0:
+        extra_x.append(sigma_A)
+    extra_x.extend(valid_break_points)
+
+    # Draw departure arrows (red, outward from pole)
+    for pk, angle_deg in departure_angles.items():
+        angle_rad_d = np.radians(angle_deg)
+        dx = arrow_len * np.cos(angle_rad_d)
+        dy = arrow_len * np.sin(angle_rad_d)
+        ax10.annotate('', xy=(pk.real + dx, pk.imag + dy),
+                      xytext=(pk.real, pk.imag),
+                      arrowprops=dict(arrowstyle='->', color='darkred', lw=2, mutation_scale=15))
+        tx = pk.real + (arrow_len + text_offset) * np.cos(angle_rad_d)
+        ty = pk.imag + (arrow_len + text_offset) * np.sin(angle_rad_d)
+        if abs(np.sin(angle_rad_d)) < 0.3:
+            ty += 0.6 * np.sign(pk.imag)
+        ax10.text(tx, ty, f'{angle_deg:.1f}°', color='darkred', fontsize=10, fontweight='bold',
+                  ha='center', va='center',
+                  bbox=dict(facecolor='white', edgecolor='darkred',
+                            boxstyle='round,pad=0.2', alpha=0.9))
+        extra_x.append(pk.real + (arrow_len + text_offset + 1) * np.cos(angle_rad_d))
+        extra_y.append(pk.imag + (arrow_len + text_offset + 1) * np.sin(angle_rad_d))
+
+    # Draw arrival arrows (green, outward from zero)
+    for zk, angle_deg in arrival_angles.items():
+        angle_rad_a = np.radians(angle_deg)
+        dx = arrow_len * np.cos(angle_rad_a)
+        dy = arrow_len * np.sin(angle_rad_a)
+        ax10.annotate('', xy=(zk.real + dx, zk.imag + dy),
+                      xytext=(zk.real, zk.imag),
+                      arrowprops=dict(arrowstyle='->', color='darkgreen', lw=2, mutation_scale=15))
+        tx = zk.real + (arrow_len + text_offset) * np.cos(angle_rad_a)
+        ty = zk.imag + (arrow_len + text_offset) * np.sin(angle_rad_a)
+        ax10.text(tx, ty, f'{angle_deg:.1f}°', color='darkgreen', fontsize=10, fontweight='bold',
+                  ha='center', va='center',
+                  bbox=dict(facecolor='white', edgecolor='darkgreen',
+                            boxstyle='round,pad=0.2', alpha=0.9))
+        extra_x.append(zk.real + (arrow_len + text_offset + 1) * np.cos(angle_rad_a))
+        extra_y.append(zk.imag + (arrow_len + text_offset + 1) * np.sin(angle_rad_a))
+
+    # Set limits to include all arrows and text
+    if extra_x:
+        x_min10, x_max10 = min(extra_x), max(extra_x)
+        x_span10 = x_max10 - x_min10
+        pad_x10 = x_span10 * 0.25 if x_span10 > 0 else 5.0
+        ax10.set_xlim(x_min10 - pad_x10, max(x_max10 + pad_x10, 5))
+    if extra_y:
+        y_abs = [abs(y) for y in extra_y]
+        y_limit10 = max(y_abs) + 4 if y_abs else 8
+        ax10.set_ylim(-y_limit10, y_limit10)
+
+    ax10.set_aspect('auto')
+    ax10.set_title('Lugar das Raízes com Vetores de Partida/Chegada', fontsize=16, pad=20)
+    ax10.set_xlabel(r'Eixo Real ($\sigma$)', fontsize=14)
+    ax10.set_ylabel(r'Eixo Imaginário ($j\omega$)', fontsize=14)
+    ax10.grid(True, linestyle=':', alpha=0.7)
+    handles, labels = ax10.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax10.legend(by_label.values(), by_label.keys(), loc='upper right', fontsize=11)
+    plt.tight_layout()
+    st.pyplot(fig10)
